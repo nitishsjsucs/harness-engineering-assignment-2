@@ -43,16 +43,16 @@ class Ledger:
 
     def table(self) -> list[str]:
         """Lines ready to print. Text, so the UI stays free of formatting rules."""
-        lines = [f"  {'model':<30}{'calls':>6}{'in':>9}{'cached':>8}{'out':>7}{'cost':>11}"]
+        lines = [f"  {'model':<36}{'calls':>6}{'in':>9}{'cached':>8}{'out':>7}{'cost':>11}"]
         for name, row in sorted(self.by_model().items(), key=lambda item: -(item[1]["cost"] or 0.0)):
             cost_text = f"{row['cost']:.6f}" if row["cost"] is not None else "n/a"
             lines.append(
-                f"  {name[:30]:<30}{row['calls']:>6}{row['prompt_tokens']:>9}"
+                f"  {name[:36]:<36}{row['calls']:>6}{row['prompt_tokens']:>9}"
                 f"{row['cached_tokens']:>8}{row['completion_tokens']:>7}{cost_text:>11}"
             )
         total = self.total
         total_text = f"{total:.6f}" if total is not None else "n/a"
-        lines.append(f"  {'total':<30}{len(self.calls):>6}{'':>9}{'':>8}{'':>7}{total_text:>11}")
+        lines.append(f"  {'total':<36}{len(self.calls):>6}{'':>9}{'':>8}{'':>7}{total_text:>11}")
         if total is None:
             lines.append("  this provider reports no cost; the token counts above are exact")
         elif len(self.priced) != len(self.calls):

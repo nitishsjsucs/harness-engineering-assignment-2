@@ -73,7 +73,7 @@ python -m pytest -q test_step.py
 ## What you should see
 
 ```text
-nanoharness step08 | openrouter | google/gemini-3.5-flash
+nanoharness step08 | openrouter | deepseek/deepseek-v4-flash-0731:free
 project: /Users/you/.../step08_skills
 skills: code-explainer, test-writer
 ╭─ load_skill ─────────────────────────────╮

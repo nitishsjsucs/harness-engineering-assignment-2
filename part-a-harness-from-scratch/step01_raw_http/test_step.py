@@ -5,7 +5,7 @@ import raw_call
 
 FAKE_JSON = {
     "id": "gen-123",
-    "model": "google/gemini-3.5-flash",
+    "model": "deepseek/deepseek-v4-flash-0731:free",
     "choices": [{"index": 0, "message": {"role": "assistant", "content": "Hello from the fake model."}}],
     "usage": {
         "prompt_tokens": 12,
@@ -39,6 +39,10 @@ def test_post_sends_json_and_openrouter_headers(monkeypatch, capsys):
     assert "Hello from the fake model." in out
     assert "cached=4" in out and "cost=$0.000042" in out
     assert "sk-or-test" not in out  # the key is masked when we print headers
+
+
+def test_default_model_is_free_tier():
+    assert raw_call.MODEL.endswith(":free") or raw_call.os.getenv("HARNESS_MODEL")
 
 
 def test_usage_line_without_openrouter_extras():

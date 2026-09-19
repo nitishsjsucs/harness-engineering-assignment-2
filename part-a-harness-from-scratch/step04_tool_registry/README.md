@@ -76,7 +76,7 @@ python -m pytest -q test_step.py
 ## What you should see
 
 ```text
-nanoharness step04 | openrouter | google/gemini-3.5-flash | tools: bash, list_dir, read_file | /exit to quit
+nanoharness step04 | openrouter | deepseek/deepseek-v4-flash-0731:free | tools: bash, list_dir, read_file
 
 you> list this directory
 

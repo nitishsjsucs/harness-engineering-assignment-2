@@ -103,8 +103,8 @@ the root of Part A covers all fifteen.
 | `OPENROUTER_API_KEY` | - | required on the openrouter route (`sk-or-...`) |
 | `OPENAI_API_KEY` | - | required on the openai route (`sk-proj-...`) |
 | `GEMINI_API_KEY` | - | required on the gemini route |
-| `HARNESS_MODEL` | per route: `google/gemini-3.5-flash`, `gpt-5-mini`, `gemini-3.5-flash` | model id; it has to match the route |
-| `HARNESS_FALLBACK_MODELS` | `deepseek/deepseek-v4-flash` | comma separated; OpenRouter's server-side fallback (step 15) |
+| `HARNESS_MODEL` | per route: `deepseek/deepseek-v4-flash-0731:free`, `gpt-5-mini`, `gemini-3.5-flash` | model id; it has to match the route |
+| `HARNESS_FALLBACK_MODELS` | `nvidia/nemotron-3.5-lightning:free` | comma separated; OpenRouter's server-side fallback (step 15) |
 | `HARNESS_BASE_URL` | the chosen route's URL | overrides the endpoint for *whichever* route you picked: a gateway, a proxy, a local server |
 | `HARNESS_PROVIDER_SORT` | - | `price`, `throughput` or `latency`; OpenRouter only (step 15) |
 | `HARNESS_CONTEXT_WINDOW` | `128000` | compaction budget (step 13) |
@@ -113,7 +113,18 @@ the root of Part A covers all fifteen.
 nothing else in the harness knows which one is in use.
 
 1. **OpenRouter (default, and what this assignment targets)**: one key for many
-   models, `usage.cost` in every response, and server-side model fallback.
+   models, `usage.cost` in every response, and server-side model fallback. The
+   default model *and* the default fallback are `:free` ids, so a fresh clone
+   plus a key runs all fifteen steps at zero cost. The free tier is rate limited
+   (roughly 50 requests a day per account, shared across models, and one agent
+   turn can be five or six requests), so for real work swap in a paid id - one
+   variable, nothing else changes:
+
+   ```bash
+   HARNESS_MODEL=google/gemini-3.5-flash     # fast, cheap, strong tool use
+   HARNESS_MODEL=deepseek/deepseek-v4-flash  # cheapest paid option
+   HARNESS_MODEL=anthropic/claude-sonnet-5   # best at long agentic turns
+   ```
 2. **OpenAI**: `HARNESS_PROVIDER=openai`, `OPENAI_API_KEY=...`,
    `HARNESS_MODEL=gpt-5-mini` (or `gpt-4.1-mini`). Same code path; OpenAI reports
    tokens but no price, and the `models` / `provider` routing keys are OpenRouter
@@ -125,11 +136,37 @@ nothing else in the harness knows which one is in use.
    `HARNESS_MODEL=gemini-3.5-flash`. The direct route is the only one that
    rewrites model ids, stripping the `google/` prefix OpenRouter uses.
 
-### Verified live
+### Verified live on OpenRouter
+
+Run on **2026-09-19** with the **free-tier defaults**
+(`deepseek/deepseek-v4-flash-0731:free`, fallback
+`nvidia/nemotron-3.5-lightning:free`), from a scratch directory outside this
+repository. **Eight OpenRouter requests in total** - the free tier allows about
+fifty a day, and one agent turn is five or six of them.
+
+| What ran | Requests | Captured verbatim |
+|---|---|---|
+| step 01, default model, "what is prompt caching?" | 1 | `=== usage: prompt=92 completion=56 cached=92 cost=$0.000000 ===` |
+| step 15 session: `write_todos` -> `write_file hello.py` -> `bash python3 hello.py` (permission prompt, answered `y`) -> `/cost` -> `/exit`, answer streamed | 5 | `in=1616 (cached 1212) out=157 cost=$0.000000`, then `(cached 1776)`, `(cached 1619)`, `(cached 1928)`, `(cached 2028)` |
+| the same session's `/cost` | - | `deepseek/deepseek-v4-flash-0731:free  5 calls  in 9228  cached 8563  out 699  cost 0.000000` |
+| server-side fallback, invalid primary id | 1 | `400 - deepseek/does-not-exist:free is not a valid model ID` - the chain is **not** tried |
+| server-side fallback, rate-limited primary (`qwen/qwen3.8-27b:free`) | 1 | replied `ok`, and the response's model id was `nvidia/nemotron-3.5-lightning:free` - the fallback answered |
+
+What this proves that the OpenAI route cannot: `usage.cost` really arrives (a
+reported `0` for a free model, which the ledger prints as `0.000000` rather than
+`n/a`), prefix caching really happens - **8,563 of 9,228 prompt tokens served
+from cache across five calls**, because the environment block is appended to the
+request instead of stored - and the `models` fallback chain really fails over,
+but only for *runtime* failures. A model id that does not exist is rejected up
+front with a 400 and the chain is never consulted; that is documented in step
+15's gotchas.
+
+Total spend: **$0.000000**, reported by the provider.
+
+### Verified live on OpenAI
 
 Run on **2026-09-19** against **OpenAI** (`HARNESS_PROVIDER=openai`,
-`HARNESS_MODEL=gpt-5-mini`, no OpenRouter key available at the time), from
-scratch directories outside this repository:
+`HARNESS_MODEL=gpt-5-mini`), from scratch directories outside this repository:
 
 | What ran | Result | Usage reported |
 |---|---|---|

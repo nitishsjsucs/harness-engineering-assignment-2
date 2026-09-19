@@ -62,6 +62,13 @@ def clean_env(monkeypatch):
     yield
 
 
+def test_default_fallback_is_also_free():
+    """Nothing in the default configuration can cost money."""
+    assert llm.DEFAULT_FALLBACKS.endswith(":free")
+    assert llm.PROVIDERS["openrouter"][2].endswith(":free")
+    assert llm.fallback_models("deepseek/deepseek-v4-flash-0731:free") == ["nvidia/nemotron-3.5-lightning:free"]
+
+
 def test_fallback_chain_is_sent_in_extra_body(monkeypatch):
     monkeypatch.setenv("HARNESS_FALLBACK_MODELS", "deepseek/deepseek-v4-flash, z-ai/glm-5.3-flash")
     client = FakeClient(

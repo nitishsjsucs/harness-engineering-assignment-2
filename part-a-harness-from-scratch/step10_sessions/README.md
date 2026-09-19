@@ -90,7 +90,7 @@ python -m pytest -q test_step.py
 ## What you should see
 
 ```text
-nanoharness step10 | openrouter | google/gemini-3.5-flash
+nanoharness step10 | openrouter | deepseek/deepseek-v4-flash-0731:free
 session: 20260919-142530-a1b2 (new)
 commands: /help, /exit, /clear, /sessions, /resume, /rewind
 ...

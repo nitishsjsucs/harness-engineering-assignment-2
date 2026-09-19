@@ -68,7 +68,7 @@ python -m pytest -q test_step.py          # offline, httpx is mocked
 { "Authorization": "Bearer sk-...redacted", "Content-Type": "application/json",
   "HTTP-Referer": "https://github.com/nitishsjsucs/...", "X-Title": "nanoharness" }
 === request body ===
-{ "model": "google/gemini-3.5-flash", "messages": [ { "role": "user", "content": "..." } ] }
+{ "model": "deepseek/deepseek-v4-flash-0731:free", "messages": [ { "role": "user", "content": "..." } ] }
 === raw response JSON ===
 { "id": "gen-...", "choices": [ { "message": { "role": "assistant", "content": "..." } } ],
   "usage": { "prompt_tokens": 14, "completion_tokens": 22, "cost": 0.0000231, ... } }
@@ -92,6 +92,8 @@ This is the first step. Files: `raw_call.py`, `test_step.py`, `README.md`.
 - `cost` is an OpenRouter extension of the OpenAI response format. Other
   OpenAI-compatible servers leave it out, so the code treats it as optional - a
   real call to OpenAI prints `cost=n/a` and real token counts.
+- The default model is OpenRouter's free tier (`...:free`), which is rate limited
+  to a few dozen requests a day per account. `HARNESS_MODEL` swaps in a paid one.
 - This step has no provider table (that arrives in step 02). Pointing it at
   another endpoint is two environment variables, which is the whole point: the
   request is just JSON over HTTPS.

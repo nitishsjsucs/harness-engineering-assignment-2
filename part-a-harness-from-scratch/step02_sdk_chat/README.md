@@ -16,14 +16,16 @@ we install in step 15.
 
 ```python
 PROVIDERS = {
-    "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", "google/gemini-3.5-flash"),
+    "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", "deepseek/deepseek-v4-flash-0731:free"),
     "openai": ("https://api.openai.com/v1", "OPENAI_API_KEY", "gpt-5-mini"),
     "gemini": ("https://generativelanguage.googleapis.com/v1beta/openai/", "GEMINI_API_KEY", "gemini-3.5-flash"),
 }
 ```
 
 Why: one table, three endpoints, and the rest of the harness never learns which
-one is in use. OpenRouter is the default - one key for many models, plus the
+one is in use. The default model is a `:free` id, so cloning this repository and
+adding an OpenRouter key costs nothing; one `HARNESS_MODEL` swaps in a paid
+model. OpenRouter is the default route - one key for many models, plus the
 cost reporting and model fallback we use in step 15. `HARNESS_PROVIDER=openai`
 and `HARNESS_PROVIDER=gemini` are direct routes for a key you already have; they
 speak the same chat-completions API, so only this table changes.
@@ -84,7 +86,7 @@ that the second answer depends on the first being in the list.
 ## What you should see
 
 ```text
-nanoharness step02 | openrouter | google/gemini-3.5-flash | /exit to quit
+nanoharness step02 | openrouter | deepseek/deepseek-v4-flash-0731:free | /exit to quit
 
 you> what is 2+2?
 

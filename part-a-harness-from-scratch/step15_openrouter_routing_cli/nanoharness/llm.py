@@ -21,14 +21,15 @@ APP_HEADERS = {
 
 # provider -> (base URL, env var that holds the key, default model id)
 # OpenRouter is the default: one key, many models, cost reporting and model fallback.
-# The other two are direct routes, for a key you already have.
+# The default model there is free-tier, so the whole course runs at zero cost;
+# swap it for a paid id with HARNESS_MODEL. The other two are direct routes.
 PROVIDERS = {
-    "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", "google/gemini-3.5-flash"),
+    "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", "deepseek/deepseek-v4-flash-0731:free"),
     "openai": ("https://api.openai.com/v1", "OPENAI_API_KEY", "gpt-5-mini"),
     "gemini": ("https://generativelanguage.googleapis.com/v1beta/openai/", "GEMINI_API_KEY", "gemini-3.5-flash"),
 }
 
-DEFAULT_FALLBACKS = "deepseek/deepseek-v4-flash"
+DEFAULT_FALLBACKS = "nvidia/nemotron-3.5-lightning:free"  # free too, so the safety net costs nothing
 
 
 class ConfigError(RuntimeError):

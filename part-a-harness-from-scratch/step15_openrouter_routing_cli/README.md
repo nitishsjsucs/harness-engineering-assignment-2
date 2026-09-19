@@ -29,7 +29,11 @@ if chain:
 ```
 
 Why: a retry loop on our side costs a round trip and cannot see that a provider
-is down. OpenRouter already knows, and does it server-side.
+is down. OpenRouter already knows, and does it server-side. Verified live: asking
+for `qwen/qwen3.8-27b:free` (rate limited upstream that afternoon) with
+`nvidia/nemotron-3.5-lightning:free` behind it returned an answer, and the
+response's model id was the *fallback*. What the chain does **not** cover is a
+model id that does not exist - see the gotchas.
 
 ```python
 "model": getattr(response, "model", None),
@@ -103,18 +107,25 @@ python -m pytest -q test_step.py
 
 ## What you should see
 
+A real OpenRouter capture on the free default (2026-09-19, five model calls):
+
 ```text
-nanoharness 0.15.0 | openrouter | google/gemini-3.5-flash | permissions: default
-fallbacks: deepseek/deepseek-v4-flash
+nanoharness 0.15.0 | openrouter | deepseek/deepseek-v4-flash-0731:free | permissions: default
+fallbacks: nvidia/nemotron-3.5-lightning:free
 sandbox: seatbelt (write only inside the project, no network)
 ...
+  in=1616 (cached 1212) out=157 cost=$0.000000
+  in=1776 (cached 1776) out=67 cost=$0.000000
 you> /cost
-  model                          calls       in  cached    out       cost
-  google/gemini-3.5-flash            7    28411    8192    942   0.004120
-  total                              7                          0.004120
+  model                                calls       in  cached    out       cost
+  deepseek/deepseek-v4-flash-0731:free     5     9228    8563    699   0.000000
+  total                                    5                           0.000000
 ```
 
-The same session on the OpenAI route (this is a real capture, 2026-09-19):
+`cost 0.000000` is a *reported* zero (a free model really costs nothing), which
+is not the same as the `n/a` below - that one means the provider never said.
+
+The same session on the OpenAI route (also a real capture, 2026-09-19):
 
 ```text
 nanoharness 0.15.0 | openai | gpt-5-mini | permissions: default
@@ -143,6 +154,17 @@ you> /cost
 
 ## Gotchas
 
+- **A fallback chain is not a spell-checker.** OpenRouter validates every id in
+  `models` before it routes, so one typo fails the whole request:
+  `400 - deepseek/does-not-exist:free is not a valid model ID`, and the fallback
+  is never tried. The chain covers *runtime* failures - a provider erroring,
+  timing out or rate limiting you - which is exactly what the live test above
+  showed. Check your ids at startup; do not rely on the chain to hide them.
+- **The free tier is rate limited.** The `:free` defaults cost nothing but allow
+  only a few dozen requests a day per account, and one agent turn is five or six
+  requests. A `429` from OpenRouter arrives as an `openai.APIError`, so the REPL
+  prints `[api error] ...` and stays alive; wait, or switch with `/model` to a
+  paid id.
 - **On the OpenAI route** (`HARNESS_PROVIDER=openai`, `HARNESS_MODEL=gpt-5-mini`)
   three of this step's features simply do not apply, and the harness says so
   rather than faking them: `extra_body` is empty (the `models` fallback chain and

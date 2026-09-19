@@ -77,11 +77,16 @@ prefix is long enough for the provider's cache.
 ## What you should see
 
 ```text
-nanoharness step07 | openrouter | google/gemini-3.5-flash
+nanoharness step07 | openrouter | deepseek/deepseek-v4-flash-0731:free
 project: /Users/you/.../step07_context_injection
-  in=1811 (cached 0) out=41 cost=$0.000142
-  in=2402 (cached 1792) out=88 cost=$0.000121
+  in=1616 (cached 1212) out=157 cost=$0.000000
+  in=1776 (cached 1776) out=67 cost=$0.000000
 ```
+
+Those two lines are a real capture (2026-09-19, the free DeepSeek default).
+Across that whole session the provider served **8,563 of 9,228 prompt tokens
+from cache** - which is what this step is for. The moment a timestamp goes into
+the transcript instead of the trailing environment block, that number collapses.
 
 ## Diff from previous step
 

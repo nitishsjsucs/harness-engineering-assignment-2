@@ -18,7 +18,7 @@ from dotenv import find_dotenv, load_dotenv
 load_dotenv(find_dotenv(usecwd=True))
 
 BASE_URL = os.getenv("HARNESS_BASE_URL", "https://openrouter.ai/api/v1")
-MODEL = os.getenv("HARNESS_MODEL", "google/gemini-3.5-flash")
+MODEL = os.getenv("HARNESS_MODEL", "deepseek/deepseek-v4-flash-0731:free")  # free tier by default
 
 # Optional OpenRouter headers. They attribute the traffic to our app on
 # openrouter.ai (rankings, per-app analytics). The model never sees them.

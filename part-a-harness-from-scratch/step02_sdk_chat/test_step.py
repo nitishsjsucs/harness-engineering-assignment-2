@@ -50,7 +50,7 @@ def test_openrouter_is_the_default_route():
     settings = llm.settings()
     assert settings["provider"] == "openrouter"
     assert settings["base_url"].startswith("https://openrouter.ai")
-    assert settings["model"] == "google/gemini-3.5-flash"
+    assert settings["model"] == "deepseek/deepseek-v4-flash-0731:free"  # free tier out of the box
 
 
 def test_gemini_route_goes_straight_to_google(monkeypatch):
