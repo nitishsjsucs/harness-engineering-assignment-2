@@ -1,0 +1,35 @@
+{
+  "name": "dsh-dino-break",
+  "version": "0.1.0",
+  "description": "A T-rex runner game floating in the bottom-right of the DeepSeek Harness Web UI, toggled from the composer tool row.",
+  "type": "module",
+  "license": "MIT",
+  "author": "nitishsjsucs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nitishsjsucs/harness-engineering-assignment-2.git",
+    "directory": "part-b-deepseek-harness/plugins/dsh-dino-break"
+  },
+  "keywords": ["dsh-plugin", "deepseek-harness", "game", "dino", "fun"],
+  "engines": { "node": ">=22" },
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["index.js", "client.js", "cordis.patch.yml", "README.md"],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  }
+}

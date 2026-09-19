@@ -1,0 +1,88 @@
+# research-librarian — a preset defined by what it CANNOT do.
+#
+# Subtraction, not addition: no shell (`tool-bash` / `tool-pwsh`), no
+# filesystem write or edit (`tool-fs` is absent entirely), no background jobs,
+# no subagents, no workflows. What is left is a knowledge agent:
+#
+#   web search + fetch            read the outside world
+#   brain_* (from the profile)    read and write the Markdown vault
+#   glob/grep (tool-fs-search)    locate a file by name or content, never open it for editing
+#   skills, todos, ask_user       keep a long literature pass organised
+#
+# The point of the preset layer: this agent runs in the SAME process, on the
+# same profile, beside the full coding agent. Nothing was forked or
+# reconfigured globally — a session simply joined a smaller composition.
+#
+# Honest limit: a preset shapes the agent's TOOLS, not the sandbox. Everything
+# the harness itself can still do (an approved tool from another preset in
+# another session, for instance) is unaffected. For a kernel-enforced
+# guarantee, pair this preset with the `read-only` permission preset.
+
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    suffix: Your working directory is {{cwd}}, but you cannot modify it.
+    prefix: |-
+      You are a research librarian powered by the {{model}} model, running on the DeepSeek Harness.
+
+      You have no shell and cannot write or edit files. Your durable output is the Second Brain: Markdown notes with tags and [[wikilinks]].
+
+      For any question: brain_search first (the answer may already be written down), then web search or fetch for what is missing. Read the source before summarising it. Capture what is worth keeping with brain_capture — one idea per note, a title a future search would actually match — and connect it to what is already there with brain_link.
+
+      Cite sources by URL and note title. Say "not in the brain, and I could not verify it" rather than guessing. When the user asks for something that needs code execution or file edits, say which preset can do it (ml-researcher or Standard) instead of pretending.
+
+- id: agent-instructions
+  name: '@deepseek-ai/dsh-agent-instructions'
+  config:
+    maxBytes: 16384
+
+# Locate files by name or content. There is no `read`, `write` or `edit` tool
+# in this composition at all, so this is a map, not a door.
+- id: tool-fs-search
+  name: '@deepseek-ai/dsh-tool-fs-search'
+  config:
+    sampleOverCapGlobResults: false
+
+- id: skill-filesystem
+  name: '@deepseek-ai/dsh-skill-filesystem'
+
+- id: tool-skill
+  name: '@deepseek-ai/dsh-tool-skill'
+
+- id: compaction
+  name: cordis:group
+  group: true
+  isolate:
+    compaction: true
+    toolResultPruner: true
+  config:
+    - id: compaction-basic
+      name: '@deepseek-ai/dsh-compaction-basic'
+
+    - id: command-compact
+      name: '@deepseek-ai/dsh-command-compact'
+
+    # Fetched pages are enormous; keep the head, drop the tail of the boilerplate.
+    - id: tool-result-pruner
+      name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+      config:
+        thresholdChars: 8192
+        headChars: 6144
+        tailChars: 512
+
+- id: tool-ask-user
+  name: '@deepseek-ai/dsh-tool-ask-user'
+
+- id: tool-todo
+  name: '@deepseek-ai/dsh-tool-todo'
+  config:
+    allowParallelInProgress: false
+
+- id: tool-web
+  name: '@deepseek-ai/dsh-tool-web'
+  config:
+    fetch: true
+    searchTimeoutMs: 60000
+
+- id: present
+  name: '@deepseek-ai/dsh-tool-present'

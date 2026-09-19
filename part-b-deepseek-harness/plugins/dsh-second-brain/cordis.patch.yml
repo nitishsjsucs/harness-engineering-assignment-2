@@ -1,0 +1,21 @@
+# dsh-second-brain bundle patch: applied when a profile lists this package in
+# dsh.profile.bundles (dsh plugin --profile web add <path-or-name>).
+#
+# Two Host rows share one vault:
+#   second-brain       model-facing tools + system prompt guidance (any profile)
+#   second-brain-web   JSON API for the browser panel (needs the Web profile's webServer)
+# The browser half is discovered from package.json `dsh.client` automatically.
+# Leave vaultDir empty to use $DSH_HOME/second-brain; point both rows at an
+# existing Obsidian vault folder to share notes with Obsidian.
+- insert:
+    - id: second-brain
+      name: dsh-second-brain
+      config:
+        vaultDir: ''
+        promptSection: true
+        searchLimit: 8
+    - id: second-brain-web
+      name: dsh-second-brain/web
+      config:
+        vaultDir: ''
+        routePrefix: /second-brain

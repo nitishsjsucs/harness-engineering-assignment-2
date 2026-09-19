@@ -1,0 +1,41 @@
+{
+  "name": "dsh-second-brain",
+  "version": "0.1.0",
+  "description": "A Second Brain for DeepSeek Harness: an Obsidian-compatible Markdown vault the agent can capture to, search (BM25), read with backlinks and link, plus a floating browse/capture panel in the Web UI.",
+  "type": "module",
+  "license": "MIT",
+  "author": "nitishsjsucs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nitishsjsucs/harness-engineering-assignment-2.git",
+    "directory": "part-b-deepseek-harness/plugins/dsh-second-brain"
+  },
+  "keywords": ["dsh-plugin", "deepseek-harness", "second-brain", "obsidian", "memory", "knowledge-graph"],
+  "engines": { "node": ">=22" },
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./web": "./web.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["index.js", "web.js", "client.js", "lib", "cordis.patch.yml", "README.md"],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-tools": ">=0.1.0-rc.6",
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  }
+}

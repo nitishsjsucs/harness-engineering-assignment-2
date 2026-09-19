@@ -1,0 +1,6 @@
+# dsh-dino-break bundle patch. One Host row for the package; the browser half
+# (client.js) is found through package.json `dsh.client` and served at
+# /plugins/dsh-dino-break/client.js.
+- insert:
+    - id: dino-break
+      name: dsh-dino-break

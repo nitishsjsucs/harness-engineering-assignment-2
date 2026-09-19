@@ -1,0 +1,35 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Harness runtime state (sessions, logs, scratch files the agents create)
+.nanoharness/
+.sessions/
+*.log
+
+# Autoresearch run artifacts (keep the curated demo run under examples/)
+part-c-autoresearch-harness/tasks/*/data/
+part-c-autoresearch-harness/tasks/*/runs/
+part-c-autoresearch-harness/tasks/*/.arh/
+
+# Node
+node_modules/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Filming material lives outside this repo on purpose
+video-production/
