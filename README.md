@@ -100,6 +100,12 @@ Two recorded runs are in [`examples/`](part-c-autoresearch-harness/examples):
   **0.960452 -> 0.005833, −99.4% in 3 min 16 s**, four kept and two reverted. The instructive one is
   experiment 2: the model wrote a correct Adam optimiser and the harness measured it four *millionths*
   worse than plain SGD, then reverted it in three seconds. No argument, a measurement.
+- **[`quickstart-live-openrouter-free`](part-c-autoresearch-harness/examples/quickstart-live-openrouter-free)** —
+  the same harness, same task, same prompt, on a free model: **zero experiments**. It read `prepare.py`
+  six times and never proposed an edit, and the request cap stopped it at 57k tokens. Kept exactly as it
+  happened, because it is the most useful result in the folder: the proposer is a swappable component,
+  the difference between models is visible in the ledger, and a harness that cannot invent progress
+  reports none.
 
 The `tinygpt` task is the real thing: a 4-layer character GPT on tiny-shakespeare, 60-second budget on
 Apple Silicon (MPS), baseline `val_bpb 2.50`. Two runs of identical code differ by ~0.026 bpb, which is
@@ -128,7 +134,13 @@ cd part-b-deepseek-harness && ./scripts/install-community-plugins.sh web && ./sc
 ```
 
 No API key is needed to run any of the test suites: they drive scripted fake models. A key is needed only
-to talk to a real one.
+to talk to a real one — and the defaults everywhere are **free-tier OpenRouter models**
+(`deepseek/deepseek-v4-flash-0731:free`, falling back to `nvidia/nemotron-3.5-lightning:free`), so the
+whole repository can be run end to end at zero cost. A Part A test asserts that nothing in the default
+configuration can spend money. Paid models are a one-line swap via `HARNESS_MODEL`.
+
+OpenRouter's free tier allows 20 requests per minute and 50 per day (1000 once an account has bought
+$10 of credit). One agent turn is five or six requests, so budget accordingly.
 
 **Verified from a clean clone on 2026-09-19** (macOS 26, arm64, Python 3.12, Node 25):
 Part A 15/15 steps (135 tests), Part B 9 vault tests, Part C 108 tests — and, with a real key,
