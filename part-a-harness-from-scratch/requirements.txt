@@ -1,0 +1,9 @@
+# Everything the fifteen steps need. Install into the repo-root venv:
+#   python3.12 -m venv ../.venv && ../.venv/bin/pip install -r requirements.txt
+openai>=1.40           # the client; pointed at OpenRouter by base_url
+httpx>=0.27            # step 01 only: the raw HTTP call
+python-dotenv>=1.0     # read .env so the key is never in a command line
+rich>=13.0             # panels, spinner, markdown answers
+prompt_toolkit>=3.0    # line editing and history at the you> prompt
+pyyaml>=6.0            # SKILL.md front matter
+pytest>=8.0            # the offline tests in every step

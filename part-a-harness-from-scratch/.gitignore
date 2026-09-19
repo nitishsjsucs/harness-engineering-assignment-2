@@ -1,0 +1,3 @@
+# Scratch space the demos write into, so step directories stay clean for diffing
+scratch/
+**/scratch/

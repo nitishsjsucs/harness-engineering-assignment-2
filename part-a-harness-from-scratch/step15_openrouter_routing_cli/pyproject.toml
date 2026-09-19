@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nanoharness"
+version = "0.15.0"
+description = "A small coding-agent harness built from scratch on the OpenRouter API"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "nitishsjsucs" }]
+keywords = ["agent", "harness", "openrouter", "llm", "cli"]
+dependencies = [
+    "openai>=1.40",
+    "httpx>=0.27",
+    "python-dotenv>=1.0",
+    "rich>=13.0",
+    "prompt_toolkit>=3.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.urls]
+Homepage = "https://github.com/nitishsjsucs/harness-engineering-assignment-2"
+
+# This is what turns `nanoharness` into a command on PATH: the installer writes a
+# small script that imports nanoharness.cli and calls main().
+[project.scripts]
+nanoharness = "nanoharness.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["nanoharness*"]
