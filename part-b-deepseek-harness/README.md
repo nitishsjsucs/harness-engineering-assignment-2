@@ -192,7 +192,34 @@ same profile. Nothing was forked.
 
 ---
 
-## 8. Troubleshooting, from things that actually went wrong here
+## 8. Testing a plugin's tools without a model
+
+A plugin's tools only earn their keep when the agent can actually call them, and checking that
+normally costs a key, credits and a nondeterministic model. `scripts/mock-provider.py` is a scripted
+OpenAI-compatible endpoint: it speaks just enough of the Chat Completions API for the harness to talk
+to it, and answers with the tool call you choose. The harness does everything else for real —
+validates the arguments, applies the permission policy, runs the tool, records the turn.
+
+```bash
+python3 scripts/mock-provider.py --call 'brain_search({"query":"pytorch"})'
+```
+
+Then add a custom provider (`mock` / `http://127.0.0.1:4111/v1` / `openai-completions` / any key /
+model `mock-model`) and send any message. The server prints the tool catalogue the harness sent,
+which is the fastest way to see whether your plugin's tools actually reached the model:
+
+```
+--- request 1: model=mock-model stream=True messages=4
+    tools offered (36): advanced_search, ask_user_question, bash, brain_capture, brain_link,
+    brain_list, brain_read, brain_search, ..., web_search, workflow, write
+      * brain_capture(title, content, tags)
+      * brain_search(query, limit)
+```
+
+It also makes the Part B demo rehearsable at zero cost, and gives you a deterministic way to
+reproduce a tool bug that a model only triggers occasionally.
+
+## 9. Troubleshooting, from things that actually went wrong here
 
 | Symptom | Cause and fix |
 |---|---|
@@ -204,14 +231,29 @@ same profile. Nothing was forked.
 
 ---
 
-## 9. What was verified, and what was not
+## 10. What was verified
 
-Verified on this machine: all seven community plugins install and load; Plugin Market reports
-`Installed (8)`; both our plugins install from tarballs and appear in the composer row; the Second Brain
-panel creates a note through the HTTP API and the note lands on disk as Markdown with front matter and a
-working wikilink; the API refuses a request without its header; the Dino game runs, scores, and ends;
-both presets appear in the mode dropdown with their metadata; `npm test` passes for the vault.
+All of it was run on this machine on 2026-09-19 (`dsh@0.1.5-rc.2`, macOS 26 arm64, Node 25.9):
 
-Not verified without a model key: the agent actually *calling* `brain_*` in a live session, and the
-Creator-mode transcripts. Those are the on-camera parts — they need a provider key, and the commands are
-exactly the ones in section 7.
+**Installation and UI.** All seven community plugins install and load; Settings -> Plugin Market reports
+`Installed (8)` and marks `DSH-better-sidebar` as installed; both our plugins install from tarballs and
+add **Brain** and **Break** to the composer row; both presets appear in the mode dropdown with their
+metadata beside Standard / PTC / Minimal / Creator.
+
+**The Second Brain, end to end.** The panel captured a note through the HTTP API, and the note landed on
+disk as Markdown with front matter, tags and a working `[[wikilink]]`; the API refused the same request
+without its header. With a model attached, the harness offered **36 tools including all five `brain_*`**
+and ran them for real: `brain_capture` created a note stamped with the session id, and in a **separate
+session with an empty context**, `brain_search` returned that note ranked by BM25 — memory outliving the
+conversation, which is the whole point of the plugin. `npm test` passes (9 tests, no network).
+
+**Creator mode.** One sentence produced a working plugin in the live process: skill load ->
+`cordis_inspect_list` -> `cordis_inspect_query` -> `cordis_define` -> `cordis_run` -> approval -> a whale
+animating in the corner and a "Hide Whale" button in the composer. 7 tool calls, 56 s, 85% cache hit.
+Details in [creator-mode-prompts.md](creator-mode-prompts.md).
+
+**The Dino game** runs, scores, ends and restarts, and does not steal Space from the composer.
+
+Not verified: the `dsh plugin add github:...` path (our plugins were installed from tarballs, which is
+the same code path pnpm takes for a registry install, but not literally a git install), and Windows
+anything — `tool-pwsh` rows are untouched defaults.

@@ -68,6 +68,29 @@ slots, and an empty `index.js` because the plugin has no Host half at all.
 
 ---
 
+### What actually happened (verified run, 2026-09-19)
+
+Run on `dsh@0.1.5-rc.2` with GPT-5 Mini, one sentence, no follow-ups:
+
+> Add a small floating whale that swims across the bottom right of this Harness UI, with a toggle
+> button next to the composer. Keep it in memory for now so I can try it before we package it.
+
+The trajectory, in order: a context injection from `dsh-persona`, then the agent loaded the
+**`cordis-plugin-development` skill** on its own, then `cordis_inspect_list`, then
+`cordis_inspect_query` against the **Client** — which is where it learned that
+`conversation.input.right` and `shell.overlay` exist — then `cordis_define` and `cordis_run`.
+
+**7 tool calls, 56 seconds, 202K tokens, 85% prompt-cache hit.** The run stopped at
+`Awaiting approval`, because mounting live code into the harness process is an approval gate, not a
+tool result. The Cordis-plugins panel in the sidebar showed the pending package with approve/reject
+controls; approving it made the whale appear in the corner and added a **"Hide Whale"** button to the
+composer row beside our own Brain and Break buttons — in the page that was already open, with no
+restart and no reload.
+
+The agent then offered exactly the right follow-ups by itself: SVG instead of emoji, a different
+animation, a different default visibility. That is the define / run / observe / redefine loop, and it
+is why Creator mode is worth four extra tools.
+
 ## Prompt 2 — the full-stack plugin (dsh-second-brain)
 
 A second brain needs storage, a search path, tools, a prompt section and a UI, so the prompt is a
