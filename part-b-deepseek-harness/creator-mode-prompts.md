@@ -156,6 +156,18 @@ no `tool-fs`, no subagents — web search plus the Second Brain, and nothing tha
 
 Both live in [`presets/`](presets) and install with `scripts/install-presets.sh`.
 
+**A caveat we hit, worth knowing before you try this on camera.** Authoring a plugin from chat worked
+first time under the default `Workspace Write` permission mode, because a dynamic plugin is code the
+agent hands to `cordis_define` — nothing touches the filesystem. Authoring a *preset* is different: it
+is a directory copy under `$DSH_HOME/.agent-presets`, which is usually **outside** the workspace, so
+the agent's `read`/`glob` calls can fail against it. In our run the agent loaded the right skill and
+reached for the right files, then stalled on filesystem errors and kept retrying. Two ways through:
+
+- switch the session's permission mode to **Full access** for that turn, so the file tools may leave
+  the workspace; or
+- do what this repo does — keep presets as files in version control and install them with a script.
+  A preset is configuration; configuration belongs in git, not in a chat transcript.
+
 ---
 
 ## Prompt 4 — connect an MCP server (configuration as a plugin)
