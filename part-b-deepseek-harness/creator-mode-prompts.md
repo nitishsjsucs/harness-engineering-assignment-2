@@ -156,17 +156,47 @@ no `tool-fs`, no subagents — web search plus the Second Brain, and nothing tha
 
 Both live in [`presets/`](presets) and install with `scripts/install-presets.sh`.
 
-**A caveat we hit, worth knowing before you try this on camera.** Authoring a plugin from chat worked
-first time under the default `Workspace Write` permission mode, because a dynamic plugin is code the
-agent hands to `cordis_define` — nothing touches the filesystem. Authoring a *preset* is different: it
-is a directory copy under `$DSH_HOME/.agent-presets`, which is usually **outside** the workspace, so
-the agent's `read`/`glob` calls can fail against it. In our run the agent loaded the right skill and
-reached for the right files, then stalled on filesystem errors and kept retrying. Two ways through:
+### What actually happened when we asked for a preset (verified run, 2026-09-19)
 
-- switch the session's permission mode to **Full access** for that turn, so the file tools may leave
-  the workspace; or
-- do what this repo does — keep presets as files in version control and install them with a script.
-  A preset is configuration; configuration belongs in git, not in a chat transcript.
+Worth knowing before you try this on camera, because it is only *half* as easy as the plugin case.
+
+Prompt, in a clean profile, Creator mode, GPT-5 Mini:
+
+> Create a new agent preset called `debug-detective` by copying the shipped Standard preset into my
+> user preset directory. Persona: reproduce the failure with a command first, then add temporary
+> logging, find the root cause, then remove the logging. Disable `tool-ralph`. Do not touch the
+> shipped preset. Tell me the exact file path when it exists.
+
+What the trajectory showed:
+
+1. It loaded `editing-cordis-compositions`, then went looking for the shipped preset with
+   `Glob **/agent-presets/**/standard/**` — which **timed out after 30 s**, because that glob is a
+   filesystem-wide search. A second glob failed too, and `read` on the installation path was refused:
+   the shipped preset lives inside the dsh install, **outside the workspace**, and the session was in
+   the default `Workspace Write` mode.
+2. Instead of giving up it asked a good question through `ask_user_question`:
+   *"Use the `agentPresets.copy` host API (recommended) — runs a short temporary plugin that calls the
+   DSH roster service to copy the preset without filesystem sandbox escalation"* versus *"do a direct
+   filesystem copy... requires approval to write outside the workspace"*.
+3. We chose the host API. Its first `cordis_define` was rejected (`dynamic package 'code.host' failed
+   to parse`), it rewrote the package, ran it — and the copy landed:
+   `~/dsh-a2-demo/home/.agent-presets/debug-detective/{agent.cordis.yml,preset.yml}`.
+
+**And then it stalled**, because the copy is *verbatim*: the new preset still had Standard's persona,
+Standard's Chinese description and `tool-ralph` enabled. Editing those files is a write outside the
+workspace — the very thing option 2 warned about.
+
+So, the honest rule:
+
+| Task | Works in Workspace Write? |
+|---|---|
+| Author a plugin (`cordis_define` / `cordis_run`) | **Yes** — it is code handed to the runtime, not a file |
+| Copy a preset (`agentPresets.copy` through a temporary plugin) | **Yes** — the service owns the write |
+| Edit the copied preset's YAML | **No** — switch the session to **Full access** for that turn |
+
+Which is why this repo ships presets as files with an install script. A preset is configuration, and
+configuration belongs in version control where it can be reviewed and diffed — not reconstructed from
+a chat transcript.
 
 ---
 
