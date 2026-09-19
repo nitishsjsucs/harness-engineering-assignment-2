@@ -20,7 +20,9 @@ Two ways to drive it:
   files before they happen.
 - **Headless** (`arh loop`): a small tool-calling agent over any OpenRouter,
   OpenAI or Google model, so nothing here depends on one assistant or one
-  vendor. Verified live against `gpt-5-mini` -- see below.
+  vendor. Run live against two of them -- `gpt-5-mini` (six experiments, four
+  kept) and a free OpenRouter model (zero experiments, and the ledger says so).
+  Both are below.
 
 Everything runs on a laptop. The reference machine is an Apple Silicon Mac; the
 GPU path is PyTorch MPS, and the fast task needs nothing but numpy.
@@ -152,14 +154,29 @@ from `HARNESS_PROVIDER`; naming one on the command line overrides it, and
 
 | provider | base URL | key | default model | notes |
 |---|---|---|---|---|
-| `openrouter` (default) | `https://openrouter.ai/api/v1` | `OPENROUTER_API_KEY` | `google/gemini-3.5-flash` | server-side fallback via `HARNESS_FALLBACK_MODELS`; reports a price per call |
+| `openrouter` (default) | `https://openrouter.ai/api/v1` | `OPENROUTER_API_KEY` | `deepseek/deepseek-v4-flash-0731:free` | free tier, so the whole harness runs at zero cost; reports a real price per call (0 for a free model); server-side fallback via `HARNESS_FALLBACK_MODELS` |
 | `openai` | `https://api.openai.com/v1` | `OPENAI_API_KEY` | `gpt-5-mini` | no price in the response, so `arh` reports tokens and `cost n/a` |
 | `gemini` | Google AI Studio's OpenAI-compatible endpoint | `GEMINI_API_KEY` | `gemini-3.5-flash` | |
 
 ```bash
+arh loop -C /tmp/qs --max 3 --max-requests 8            # free default, capped
+HARNESS_MODEL=anthropic/claude-sonnet-5 arh loop -C /tmp/qs --max 6   # one line to go paid
 HARNESS_PROVIDER=openai HARNESS_MODEL=gpt-5-mini arh loop -C /tmp/qs --max 6
 arh loop -C /tmp/qs --agent openai --model gpt-4.1-mini --max 6   # same thing, spelled out
 ```
+
+**The default costs nothing.** `deepseek/deepseek-v4-flash-0731:free` is a
+free-tier model, so a reader can clone this repo and watch the loop run without
+a bill. Free tier means a shared **daily quota of roughly 50 requests**, and
+one experiment costs at least one request (usually two: propose, then run), so
+`arh loop --max-requests N` is a hard cap that stops the loop cleanly rather
+than burning the quota. Rate-limit and auth errors are never retried, for the
+same reason.
+
+Free is not the same as capable: in the live run below, the default free model
+spent 10 requests reading files and never proposed a single change, while
+`gpt-5-mini` produced six experiments. Start free to see the machinery work,
+then swap the model in one line when you want the research to go somewhere.
 
 ## Measured on this machine (Apple M-series, 2026-09-19)
 
@@ -203,6 +220,40 @@ reported as it happened; the rejected reward hack in
 [`examples/quickstart-run/`](examples/quickstart-run/) comes from a
 hand-written experiment, not a staged model output.
 
+### Verified live (2026-09-19, provider `openrouter`, model `deepseek/deepseek-v4-flash-0731:free`)
+
+The documented default path, on the free tier, same task and same commands.
+Artefacts in
+[`examples/quickstart-live-openrouter-free/`](examples/quickstart-live-openrouter-free/).
+
+**Zero experiments in 10 API requests.** Two attempts (capped at 8 and 2
+requests): the model spent 57,121 tokens reading `prepare.py` six times,
+`autoresearch.toml` twice and a path it invented, then in the second attempt
+read three files and the ledger -- and never once called `edit_file`. The
+ledger contains the baseline and nothing else.
+
+```
+[arh] stopped: request cap reached (8). 0 experiments, 0 kept. 8 requests, 57121 tokens, cost $0.0000
+```
+
+What that run does prove: the OpenRouter transport, tool calling, usage
+accounting, the request cap and the clean stop all work against the real API,
+and `cost $0.0000` is a *reported* zero (a free model), printed differently
+from the `n/a` used when a provider reports no price at all.
+
+What it also shows, which is the more useful finding: **the proposer is a
+swappable component, and its quality is visible in the ledger rather than
+hidden in a transcript.** The same harness, same task and same prompt gave six
+experiments and four keeps with `gpt-5-mini`, and an empty ledger with this
+free model. The harness did not invent progress to fill the gap -- it recorded
+nothing, because nothing was measured.
+
+The run did produce one fix: a repeated `read_file` inside an episode is now
+answered with an instruction instead of the file, so a looping proposer cannot
+spend a daily quota re-reading a frozen file. The free-tier budget ran out
+before that fix could be re-tested against this model, and it is not claimed to
+rescue it.
+
 ## File-by-file tour
 
 ```
@@ -221,8 +272,8 @@ part-c-autoresearch-harness/
   claude-plugin/        the Claude Code plugin (commands, skill, agent, hooks)
   tasks/quickstart/     numpy spirals, ~4 s per experiment
   tasks/tinygpt/        char-level GPT on tiny-shakespeare, 60 s per experiment
-  examples/               two real runs: one live (gpt-5-mini), one scripted
-                        -- ledgers, logs, diffs, charts, reports
+  examples/               three real runs: two live (gpt-5-mini, a free model that
+                        proposed nothing) and one scripted -- ledgers, logs, charts
   scripts/              demo_quickstart.sh + the scripted experiment list
   tests/                pytest, offline, no API key, no torch
   RESEARCH.md           the survey of eight existing harnesses, and what we took
@@ -288,6 +339,10 @@ your history.
 
 ## Limitations, honestly
 
+- **A weak proposer produces an empty ledger, not a warning.** The harness
+  reports what was measured; it cannot tell you that your model is too small
+  until you read the (empty) results. `--max-requests` at least bounds what
+  that costs you.
 - **One run per experiment.** A keep can be noise. The fix is multi-seed
   scoring with a significance test (see `RESEARCH.md` on `rigor.py`); `arh`
   only offers `min_delta` and an optional holdout today.

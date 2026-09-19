@@ -46,6 +46,18 @@ context growing, and a crashed process loses nothing.
 `ARH_EVAL_SPLIT=None` for ordinary runs, so a holdout switch left in someone's
 shell cannot leak into a normal experiment.
 
+**A quota is part of the budget.** `ChatModel` counts its own requests and
+`arh loop --max-requests N` raises `BudgetExceeded`, which the loop treats as a
+clean stop (ledger intact, usage reported) rather than an error. Rate-limit,
+auth and payment errors are never retried -- on a free tier, a retry loop is
+just a faster way to spend the day's quota.
+
+**Three kinds of spend, reported separately.** `usage` returns requests, tokens
+and cost, and cost is `None` when the provider reports no price at all (OpenAI)
+but `0.0` when it reports free (an OpenRouter `:free` model). The CLI prints
+`cost n/a` for the first and `$0.0000` for the second, because they are
+different facts.
+
 **Statuses mean different things.**
 
 | status | meaning | who is at fault |

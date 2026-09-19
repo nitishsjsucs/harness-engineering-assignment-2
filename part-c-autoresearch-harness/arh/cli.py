@@ -96,6 +96,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--script", default=None, help="JSON experiment script for --agent scripted")
     p.add_argument("--max", type=int, default=10, help="experiments to run in this loop")
     p.add_argument("--minutes", type=float, default=None, help="stop after this much wall clock")
+    p.add_argument(
+        "--max-requests",
+        type=int,
+        default=None,
+        help="hard cap on model API calls; a free tier is a daily quota, not a tap",
+    )
     p.add_argument("--model", default=None, help="override HARNESS_MODEL")
     p.add_argument("--dry-run", action="store_true", help="print the prompt and tools, call no model")
     p.set_defaults(func=cmd_loop)
@@ -207,7 +213,7 @@ def cmd_loop(args) -> int:
     else:
         provider = None if args.agent == "llm" else args.agent
         try:
-            model = ChatModel(model=args.model, provider=provider)
+            model = ChatModel(model=args.model, provider=provider, max_requests=args.max_requests)
         except (RuntimeError, ImportError) as exc:  # missing key or missing openai package
             raise HarnessError(f"{exc}; or run offline with --dry-run / --agent scripted") from exc
     print(f"[arh] proposer: {model.name}; up to {args.max} experiments")
@@ -223,12 +229,13 @@ def cmd_loop(args) -> int:
 
 
 def _usage(result) -> str:
-    """Cost is only printed when the provider actually reported one -- OpenAI
-    does not, and "$0.0000 spent" would be a lie rather than a discount."""
-    if not result.tokens:
+    """Three different facts, kept apart: what we spent in requests, in tokens,
+    and in money. A price of 0.0 that the provider actually reported (a free
+    model) is not the same as a provider that reports no price at all."""
+    if not result.requests and not result.tokens:
         return ""
     cost = f"${result.cost:.4f}" if result.cost is not None else "n/a (provider reports no price)"
-    return f"{result.tokens} tokens, cost {cost}"
+    return f"{result.requests} requests, {result.tokens} tokens, cost {cost}"
 
 
 def _harness(args) -> Harness:

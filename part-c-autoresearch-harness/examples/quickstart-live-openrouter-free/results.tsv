@@ -1,0 +1,2 @@
+id	timestamp	status	metric	delta	best	commit	parent	duration_s	description
+0	2026-09-19T15:35:01	keep	0.960452	-	-	fdeb7b4	fdeb7b4	3.160000	baseline (unmodified code)

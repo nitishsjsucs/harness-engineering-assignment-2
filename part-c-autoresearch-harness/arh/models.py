@@ -25,7 +25,10 @@ from dataclasses import dataclass, field
 DEFAULTS = {
     "openrouter": {
         "base_url": "https://openrouter.ai/api/v1",
-        "model": "google/gemini-3.5-flash",
+        # A ":free" model by default, so the whole harness can be run end to end
+        # at zero cost. Free tier means ~50 requests per day across the account,
+        # and one experiment costs at least one request -- see --max-requests.
+        "model": "deepseek/deepseek-v4-flash-0731:free",
         "key_var": "OPENROUTER_API_KEY",
     },
     "openai": {
@@ -39,6 +42,10 @@ DEFAULTS = {
         "key_var": "GEMINI_API_KEY",
     },
 }
+
+
+class BudgetExceeded(RuntimeError):
+    """The request cap was reached. Free tiers are a daily quota, not a tap."""
 
 
 @dataclass
@@ -110,7 +117,8 @@ class ChatModel:
     provider comes from HARNESS_PROVIDER unless the caller names one.
     """
 
-    def __init__(self, model=None, provider=None, base_url=None, api_key=None, fallbacks=None, client=None, retries=3):
+    def __init__(self, model=None, provider=None, base_url=None, api_key=None, fallbacks=None, client=None,
+                 retries=3, max_requests=None):
         _load_dotenv()
         self.provider = provider or os.getenv("HARNESS_PROVIDER", "openrouter")
         cfg = DEFAULTS.get(self.provider) or DEFAULTS["openrouter"]
@@ -119,10 +127,12 @@ class ChatModel:
         self.retries = retries
         raw_fallbacks = fallbacks if fallbacks is not None else os.getenv("HARNESS_FALLBACK_MODELS", "")
         self.fallbacks = [m.strip() for m in (raw_fallbacks.split(",") if isinstance(raw_fallbacks, str) else raw_fallbacks) if m.strip()]
+        self.max_requests = max_requests
+        self.requests = 0
         self.tokens = 0
         self.cost = 0.0
-        # Only OpenRouter puts a price on each response. For everybody else we
-        # report tokens and say "n/a" rather than printing a confident $0.00.
+        # OpenRouter prices each response (a free model reports a real 0.0);
+        # other providers report nothing, and "n/a" is the honest answer there.
         self.cost_reported = False
         if client is not None:
             self.client = client
@@ -139,6 +149,9 @@ class ChatModel:
         return f"{self.provider}:{self.model}"
 
     def complete(self, messages: list[dict], tools: list[dict]) -> Reply:
+        if self.max_requests is not None and self.requests >= self.max_requests:
+            raise BudgetExceeded(f"request cap reached ({self.max_requests})")
+        self.requests += 1
         kwargs = {"model": self.model, "messages": messages, "tools": tools}
         if self.provider == "openrouter":
             # Server-side fallback + the headers OpenRouter shows in its logs.
@@ -164,7 +177,9 @@ class ChatModel:
 
     @property
     def usage(self) -> dict:
-        return {"tokens": self.tokens, "cost": self.cost if self.cost_reported else None}
+        """cost None means "the provider told us nothing"; cost 0.0 means the
+        provider told us it was free. Those are different facts."""
+        return {"requests": self.requests, "tokens": self.tokens, "cost": self.cost if self.cost_reported else None}
 
     def _account(self, usage) -> None:
         if usage is None:
@@ -175,16 +190,25 @@ class ChatModel:
             self.cost += float(price)
             self.cost_reported = True
 
+    # Retrying these just burns a daily quota faster: they will not heal in 2s.
+    FATAL_STATUS = (401, 402, 403, 429)
+    FATAL_NAMES = ("RateLimit", "Authentication", "PermissionDenied", "BadRequest", "NotFound")
+
     def _with_retries(self, kwargs: dict):
         for attempt in range(self.retries):
             try:
                 return self.client.chat.completions.create(**kwargs)
             except Exception as exc:  # network, rate limit, provider hiccup
-                if attempt == self.retries - 1:
+                if attempt == self.retries - 1 or self._is_fatal(exc):
                     raise
                 wait = 2 ** attempt
                 print(f"[arh] model call failed ({exc.__class__.__name__}: {exc}); retrying in {wait}s", flush=True)
                 time.sleep(wait)
+
+    def _is_fatal(self, exc) -> bool:
+        if getattr(exc, "status_code", None) in self.FATAL_STATUS:
+            return True
+        return any(name in exc.__class__.__name__ for name in self.FATAL_NAMES)
 
 
 # The old name, kept so `from arh.models import OpenRouterModel` still works.

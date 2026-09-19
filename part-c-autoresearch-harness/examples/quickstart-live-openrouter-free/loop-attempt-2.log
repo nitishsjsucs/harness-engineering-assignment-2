@@ -1,0 +1,14 @@
+[arh] proposer: openrouter:deepseek/deepseek-v4-flash-0731:free; up to 1 experiments
+
+[arh] episode 1: experiment 1/1
+[tool] read_file {"path": "train.py"}
+[tool] -> """EDITABLE. The only file an experiment may change in the quickstart task.
+[tool] read_file {"path": "prepare.py"}
+[tool] -> """FROZEN. Data and evaluation for the quickstart task -- the harness hashes
+[tool] read_file {"path": "autoresearch.toml"}
+[tool] -> # The contract between the researcher (human or model) and the harness.
+[tool] show_history {"limit": 5}
+[tool] -> id	status	metric	delta	description	reason
+[arh] request cap reached (2)
+
+[arh] stopped: request cap reached (2). 0 experiments, 0 kept. 2 requests, 8344 tokens, cost $0.0000

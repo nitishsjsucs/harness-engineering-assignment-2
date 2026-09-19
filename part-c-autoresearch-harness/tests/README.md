@@ -1,6 +1,6 @@
 # `tests/`
 
-108 tests, no network, no API key, no torch, about 30 seconds.
+109 tests, no network, no API key, no torch, under a minute.
 
 ```bash
 pip install -e ".[dev]"
@@ -18,7 +18,7 @@ guarantees. Every guard in the README's diagram has a test that makes it fire.
 | `test_engine.py` | keep / discard / crash / timeout / invalid, reverts, every guard (frozen edit, runtime tampering, forbidden pattern, bounds, duplicate metric, `GUARD_FAIL`, new files, holdout rejection), the lock, and the refusal to run after a hand-made commit |
 | `test_gitops.py` | isolated mode leaves an enclosing repository untouched; repo mode branches inside it and commits only task paths; a discard does not revert the human's unrelated work |
 | `test_ledger_and_report.py` | TSV shape, tabs in a description cannot break the grid, append-only enforcement, consistency checking, and that the report really writes a PNG |
-| `test_agent.py` | the agent's tools refuse frozen paths and escapes, the episode loop runs one experiment per episode and stops, and the chat-model plumbing for each provider (OpenRouter's fallback models and price, OpenAI's absence of one) with a fake client |
+| `test_agent.py` | the agent's tools refuse frozen paths and escapes, a repeated `read_file` is answered with an instruction instead of the file, the episode loop runs one experiment per episode and stops at both the experiment budget and the request cap, and the chat-model plumbing for each provider (OpenRouter's fallback models and its real `0.0` for a free model, OpenAI's absent price) with a fake client |
 | `test_hooks.py` | the Claude Code hooks, run the way Claude Code runs them (JSON on stdin): frozen file blocked, editable allowed, ledger blocked, malformed input fails closed -- plus a parity test that the hook's copy of the matching rules agrees with the engine's |
 | `test_tasks.py` | the shipped specs load, the quickstart evaluator refuses malformed output, and the demo script is well formed |
 

@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from arh.engine import Harness, HarnessError, format_verdict
-from arh.models import Reply, ToolCall
+from arh.models import BudgetExceeded, Reply, ToolCall
 
 MAX_TOOL_RESULT_CHARS = 8000
 
@@ -103,11 +103,27 @@ class TaskTools:
     def __init__(self, harness: Harness):
         self.h = harness
         self.experiments: list[dict] = []
+        self._seen: set = set()
+
+    def begin_episode(self) -> None:
+        self._seen.clear()
 
     def dispatch(self, call: ToolCall) -> str:
         handler = getattr(self, call.name, None)
         if handler is None or call.name.startswith("_"):
             return f"ERROR: no such tool {call.name!r}"
+        # Anti-loop guard. Weaker models re-read the same frozen file until the
+        # episode budget runs out; on a metered API every repeat is a paid
+        # request that cannot produce an experiment. Answering the repeat with
+        # an instruction costs nothing and breaks the cycle.
+        signature = (call.name, json.dumps(call.arguments, sort_keys=True))
+        if call.name == "read_file" and signature in self._seen:
+            return (
+                f"ALREADY READ: {call.arguments.get('path')} is unchanged since you read it in this episode. "
+                "Stop reading and act: make ONE change to an editable file with edit_file, "
+                "then call run_experiment."
+            )
+        self._seen.add(signature)
         try:
             return handler(**call.arguments)
         except TypeError as exc:
@@ -173,6 +189,7 @@ class LoopResult:
     experiments: list = field(default_factory=list)
     episodes: int = 0
     stopped_because: str = ""
+    requests: int = 0
     tokens: int = 0
     cost: float | None = None  # None means the provider does not report a price
 
@@ -211,9 +228,17 @@ def run_loop(
             {"role": "system", "content": system_prompt(harness)},
             {"role": "user", "content": briefing(harness)},
         ]
+        tools.begin_episode()
         ran = False
         for _ in range(max_steps_per_episode):
-            reply: Reply = model.complete(messages, TOOL_SCHEMAS)
+            try:
+                reply: Reply = model.complete(messages, TOOL_SCHEMAS)
+            except BudgetExceeded as exc:
+                # A hard stop, not an error: the cap exists to protect a quota.
+                log(f"[arh] {exc}")
+                result.stopped_because = str(exc)
+                result.experiments = list(tools.experiments)
+                return _finalise(result, model)
             messages.append(reply.raw or _assistant_message(reply))
             if not reply.tool_calls:
                 if reply.content:
@@ -242,7 +267,12 @@ def run_loop(
     else:
         result.stopped_because = "max experiments reached"
 
+    return _finalise(result, model)
+
+
+def _finalise(result: "LoopResult", model) -> "LoopResult":
     usage = getattr(model, "usage", {})
+    result.requests = usage.get("requests", 0)
     result.tokens, result.cost = usage.get("tokens", 0), usage.get("cost")
     return result
 

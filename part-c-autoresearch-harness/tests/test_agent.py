@@ -19,6 +19,13 @@ def call(name, **arguments):
 def test_read_any_file_in_the_task(harness):
     tools = TaskTools(harness)
     assert "TARGET" in tools.dispatch(call("read_file", path="prepare.py"))
+    # Re-reading the same file inside one episode is answered with an
+    # instruction, not the file again: a weak model that loops on read_file
+    # would otherwise spend a whole request budget without proposing anything.
+    again = tools.dispatch(call("read_file", path="prepare.py"))
+    assert again.startswith("ALREADY READ") and "run_experiment" in again
+    tools.begin_episode()
+    assert "TARGET" in tools.dispatch(call("read_file", path="prepare.py"))
 
 
 def test_edit_an_editable_file(harness):
@@ -82,6 +89,17 @@ def test_the_loop_runs_one_experiment_per_episode(harness):
     assert result.kept == 1
     assert result.stopped_because == "the model stopped proposing experiments"
     assert "VALUE = 4.0" in (harness.root / "train.py").read_text(), "the discard was reverted"
+
+
+def test_the_loop_stops_at_the_request_cap(harness):
+    """A free tier is a daily quota: the cap has to stop the loop cleanly,
+    keeping whatever experiments were already measured."""
+    client = FakeClient()
+    model = ChatModel(provider="openrouter", model="x/y:free", client=client, max_requests=2)
+    result = run_loop(harness, model, max_experiments=5, log=lambda *a: None)
+    assert model.requests == 2
+    assert "request cap reached (2)" in result.stopped_because
+    assert result.requests == 2
 
 
 def test_the_loop_stops_at_the_experiment_budget(harness):
@@ -161,7 +179,7 @@ def test_openrouter_plumbing():
     assert "X-Title" in sent["extra_headers"]
     assert reply.tool_calls[0].name == "run_experiment"
     assert reply.tool_calls[0].arguments == {"description": "try it"}
-    assert model.usage == {"tokens": 1234, "cost": 0.002}
+    assert model.usage == {"requests": 1, "tokens": 1234, "cost": 0.002}
 
 
 def test_openai_plumbing_sends_no_openrouter_extras():
@@ -176,21 +194,33 @@ def test_openai_plumbing_sends_no_openrouter_extras():
     assert model.base_url == "https://api.openai.com/v1"
 
 
-def test_cost_is_reported_as_unknown_when_the_provider_omits_it():
-    """OpenAI returns no price, so the harness must say n/a, not $0.00."""
-    client = FakeClient()
-    client.chat.completions.usage_cost = None
-    model = ChatModel(provider="openai", model="gpt-5-mini", client=client)
+def test_an_absent_price_and_a_reported_zero_are_different_facts():
+    """OpenAI returns no price at all -> n/a. A ":free" OpenRouter model
+    returns a real 0.0 -> $0.0000. Printing the same thing for both would
+    misreport one of them."""
+    silent = FakeClient()
+    silent.chat.completions.usage_cost = None
+    model = ChatModel(provider="openai", model="gpt-5-mini", client=silent)
     model.complete([{"role": "user", "content": "hi"}], [{"type": "function"}])
-    assert model.usage == {"tokens": 1234, "cost": None}
+    assert model.usage == {"requests": 1, "tokens": 1234, "cost": None}
+
+    free = FakeClient()
+    free.chat.completions.usage_cost = 0.0
+    model = ChatModel(provider="openrouter", model="x/y:free", client=free)
+    model.complete([{"role": "user", "content": "hi"}], [{"type": "function"}])
+    assert model.usage == {"requests": 1, "tokens": 1234, "cost": 0.0}
 
 
 def test_the_provider_comes_from_the_environment(monkeypatch):
     monkeypatch.setenv("HARNESS_PROVIDER", "openai")
     monkeypatch.delenv("HARNESS_MODEL", raising=False)
     monkeypatch.delenv("HARNESS_BASE_URL", raising=False)
-    model = ChatModel(client=FakeClient())
-    assert model.name == "openai:gpt-5-mini"
+    assert ChatModel(client=FakeClient()).name == "openai:gpt-5-mini"
+
+    monkeypatch.delenv("HARNESS_PROVIDER")
+    # The documented default is a free-tier model, so `arh loop` costs nothing
+    # to try out.
+    assert ChatModel(client=FakeClient()).model.endswith(":free")
 
 
 def _trainer(value):

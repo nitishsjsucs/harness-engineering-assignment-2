@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "commit": "fdeb7b4d98743baf69d5b16d637de72d38b49080",
+    "confirm_metric": 0.896181,
+    "id": 0,
+    "metric": 0.960452
+  },
+  "best": {
+    "commit": "fdeb7b4d98743baf69d5b16d637de72d38b49080",
+    "confirm_metric": 0.896181,
+    "id": 0,
+    "metric": 0.960452
+  },
+  "branch": "autoresearch/orfree",
+  "created": "2026-09-19T15:35:01",
+  "editable": [
+    "train.py"
+  ],
+  "frozen": [
+    "prepare.py"
+  ],
+  "frozen_hashes": {
+    "prepare.py": "addb4c0c07b04433268367c3656378a04c77e6039fea1ee89ff8900e5d7a8f03"
+  },
+  "git_mode": "isolated",
+  "init_commit": "fdeb7b4d98743baf69d5b16d637de72d38b49080",
+  "integrity_hashes": {},
+  "tag": "orfree",
+  "task": "quickstart"
+}
