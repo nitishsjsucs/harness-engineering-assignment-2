@@ -86,7 +86,17 @@ Karpathy's autoresearch loop — edit one file, run under a fixed time budget, k
 improved, revert if it did not, repeat — rebuilt as a harness with the parts that decide whether the loop
 produces knowledge or noise: an append-only experiment ledger, frozen evaluation files whose hashes are
 checked on every run, an editable-file allowlist enforced on the git diff, and a holdout check before a new
-best is accepted. It runs end to end from a coding assistant or headless.
+best is accepted. It runs end to end from a coding assistant (a Claude Code plugin with commands, a skill,
+a reviewer subagent and a fail-closed PreToolUse hook) or headless with no assistant at all.
+
+A real run on the bundled `quickstart` task, [kept in `examples/`](part-c-autoresearch-harness/examples/quickstart-run):
+`val_loss` 0.960 -> 0.0093 over eight experiments — four kept, one discarded, one crashed on NaN, and one
+**rejected in 0.00 s before any compute**, because the proposed diff reached into the validation split.
+That row is the entire argument for building a harness instead of writing a prompt.
+
+The `tinygpt` task is the real thing: a 4-layer character GPT on tiny-shakespeare, 60-second budget on
+Apple Silicon (MPS), baseline `val_bpb 2.50`. Two runs of identical code differ by ~0.026 bpb, which is
+why the harness has a `min_delta` and why the docs call a single-run improvement provisional.
 
 ---
 
