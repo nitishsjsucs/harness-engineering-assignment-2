@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harness Engineering — Assignment 2</title>
+<meta name="description" content="Three harnesses: a coding agent built from scratch on OpenRouter, DeepSeek Harness plugins built in Creator mode, and an ML autoresearch harness as a coding-assistant plugin.">
+<style>
+  :root{
+    --bg:#0f1115; --surface:#161922; --surface-2:#1d212c; --line:#272c39;
+    --fg:#e8eaf0; --muted:#9aa2b4; --accent:#6d8cff; --accent-2:#54d1a0; --accent-3:#ffb86b;
+    --radius:14px; --maxw:1060px;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:#fbfbfd; --surface:#fff; --surface-2:#f3f4f8; --line:#e3e5ec;
+      --fg:#15171e; --muted:#5b6376; --accent:#3b5bdb; --accent-2:#0f9d6e; --accent-3:#b8721a;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font:16px/1.65 ui-sans-serif,-apple-system,"Segoe UI",Inter,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 16px}
+  code,kbd,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  header{padding:72px 0 40px;border-bottom:1px solid var(--line)}
+  .eyebrow{color:var(--muted);font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 14px}
+  h1{margin:0 0 16px;font-size:clamp(30px,5.4vw,50px);line-height:1.08;letter-spacing:-.02em}
+  h1 .thin{color:var(--muted);font-weight:400}
+  .lede{max-width:64ch;color:var(--muted);font-size:clamp(16px,2.2vw,19px);margin:0 0 26px}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;
+    border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:14px;font-weight:500}
+  .btn:hover{border-color:var(--accent);text-decoration:none}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  section{padding:56px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 22px;font-weight:600}
+  .idea{max-width:70ch;font-size:clamp(17px,2.4vw,21px);line-height:1.55;margin:0}
+  .idea em{color:var(--accent-2);font-style:normal}
+
+  .cards{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column}
+  .card h3{margin:0 0 4px;font-size:20px;letter-spacing:-.01em}
+  .tag{display:inline-block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--bg);
+    background:var(--accent);border-radius:999px;padding:3px 9px;font-weight:700;margin-bottom:12px}
+  .card.b .tag{background:var(--accent-2)} .card.c .tag{background:var(--accent-3)}
+  .card p{color:var(--muted);margin:0 0 14px;font-size:15px}
+  .card ul{margin:0 0 18px;padding-left:18px;color:var(--muted);font-size:14.5px}
+  .card li{margin:5px 0}
+  .card .links{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .pill{font-size:13px;padding:6px 11px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);color:var(--fg)}
+  .pill:hover{border-color:var(--accent);text-decoration:none}
+  .pill.todo{color:var(--muted);border-style:dashed}
+
+  pre{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;overflow:auto;font-size:13.5px;line-height:1.6;margin:0}
+  pre .c{color:var(--muted)}
+
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+  td code{font-size:13px;background:var(--surface-2);padding:1px 6px;border-radius:5px}
+
+  footer{padding:40px 0 70px;color:var(--muted);font-size:14px}
+  footer a{color:var(--muted);text-decoration:underline}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <p class="eyebrow">Assignment 2 · Harness Engineering · SJSU · September 2026</p>
+    <h1>Three harnesses.<br><span class="thin">Built, broken, and shown working.</span></h1>
+    <p class="lede">A model is a function from a list of messages to one message. Everything that makes it
+      feel like a colleague lives in the loop around it. This is that loop — written by hand, extended
+      inside a production harness, and pointed at research.</p>
+    <div class="meta">
+      <a class="btn primary" href="https://github.com/nitishsjsucs/harness-engineering-assignment-2">Repository</a>
+      <a class="btn" href="#parts">The three parts</a>
+      <a class="btn" href="#videos">Videos</a>
+      <a class="btn" href="#run">Run it</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>The idea</h2>
+    <p class="idea">Models are interchangeable; the harness is the product. The same model behaves like a
+      toy or like a colleague depending on what surrounds it: which tools it can reach, what it remembers,
+      what it is allowed to run, what happens when the context fills up, and who says stop.
+      <em>Part A builds that loop by hand. Part B takes a production one apart. Part C points one at
+      research instead of code.</em></p>
+  </div>
+</section>
+
+<section id="parts">
+  <div class="wrap">
+    <h2>The three parts</h2>
+    <div class="cards">
+
+      <article class="card a">
+        <span class="tag">Part A</span>
+        <h3>A harness from scratch</h3>
+        <p>Fifteen runnable steps on the OpenRouter API. Each step is the previous one plus exactly one
+          idea, so a <code>diff</code> between them shows that idea and nothing else.</p>
+        <ul>
+          <li>One raw HTTP POST → tools → the agent loop</li>
+          <li>Skills, todos, sessions, rewind</li>
+          <li>Permissions, then a kernel sandbox</li>
+          <li>Compaction and subagents</li>
+          <li>Model fallbacks, a cost ledger, an installable CLI</li>
+        </ul>
+        <div class="links">
+          <a class="pill" href="https://github.com/nitishsjsucs/harness-engineering-assignment-2/tree/main/part-a-harness-from-scratch">Code</a>
+          <a class="pill todo" href="#videos">Video</a>
+        </div>
+      </article>
+
+      <article class="card b">
+        <span class="tag">Part B</span>
+        <h3>DeepSeek Harness, extended</h3>
+        <p>A harness where <em>everything is a plugin</em> — including the agent loop. Customised in
+          Creator mode, which lets the agent inspect the running UI and mount plugins into the live process.</p>
+        <ul>
+          <li>7 community plugins, one per extension point</li>
+          <li><strong>Second Brain</strong>: memory the agent searches, in an Obsidian vault</li>
+          <li><strong>Dino Break</strong>: a game from one sentence</li>
+          <li>2 domain agents as presets, not forks</li>
+        </ul>
+        <div class="links">
+          <a class="pill" href="https://github.com/nitishsjsucs/harness-engineering-assignment-2/tree/main/part-b-deepseek-harness">Code</a>
+          <a class="pill" href="https://github.com/nitishsjsucs/harness-engineering-assignment-2/blob/main/part-b-deepseek-harness/creator-mode-prompts.md">Prompts</a>
+          <a class="pill todo" href="#videos">Video</a>
+        </div>
+      </article>
+
+      <article class="card c">
+        <span class="tag">Part C</span>
+        <h3>An ML autoresearch harness</h3>
+        <p>Edit one file, run under a fixed time budget, keep the change if the metric improved, revert if
+          it did not — plus the guards that decide whether the loop produces knowledge or noise.</p>
+        <ul>
+          <li>Append-only experiment ledger</li>
+          <li>Frozen evaluation files, hashed every run</li>
+          <li>Editable-file allowlist enforced on the diff</li>
+          <li>Runs from a coding assistant or headless</li>
+        </ul>
+        <div class="links">
+          <a class="pill" href="https://github.com/nitishsjsucs/harness-engineering-assignment-2/tree/main/part-c-autoresearch-harness">Code</a>
+          <a class="pill todo" href="#videos">Video</a>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section id="videos">
+  <div class="wrap">
+    <h2>Videos</h2>
+    <table>
+      <thead><tr><th>Part</th><th>What it covers</th><th>Link</th></tr></thead>
+      <tbody>
+        <tr><td><strong>A</strong></td><td>Every file of the 15 steps, each one executing</td><td><em>to be added</em></td></tr>
+        <tr><td><strong>B</strong></td><td>DeepSeek Harness install, Creator mode, both plugins live</td><td><em>to be added</em></td></tr>
+        <tr><td><strong>C</strong></td><td>The autoresearch loop improving a real metric, and the guards</td><td><em>to be added</em></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="run">
+  <div class="wrap">
+    <h2>Run it</h2>
+<pre><span class="c"># clone</span>
+git clone https://github.com/nitishsjsucs/harness-engineering-assignment-2
+cd harness-engineering-assignment-2
+
+<span class="c"># Part A — offline tests need no API key</span>
+python3.12 -m venv .venv &amp;&amp; .venv/bin/pip install -r part-a-harness-from-scratch/requirements.txt
+.venv/bin/python part-a-harness-from-scratch/run_tests.py
+
+<span class="c"># Part B — the DeepSeek Harness and every plugin</span>
+npm install -g @deepseek-ai/dsh
+cd part-b-deepseek-harness
+./scripts/install-community-plugins.sh web
+./scripts/install-local-plugins.sh web
+./scripts/install-presets.sh
+
+<span class="c"># Part C — the autoresearch engine and its tests</span>
+.venv/bin/pip install -e part-c-autoresearch-harness
+.venv/bin/python -m pytest part-c-autoresearch-harness/tests -q</pre>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Built by <a href="https://github.com/nitishsjsucs">nitishsjsucs</a>. MIT licensed.
+    Ideas borrowed, code written: <a href="https://github.com/dlmastery/simple-coding-harness">simple-coding-harness</a>,
+    <a href="https://github.com/avbiswas/neural-code">neural-code</a>,
+    <a href="https://github.com/deepseek-ai/deepseek-harness">DeepSeek Harness</a>,
+    <a href="https://github.com/karpathy/autoresearch">autoresearch</a>,
+    <a href="https://github.com/WecoAI/awesome-autoresearch">awesome-autoresearch</a>.
+  </div>
+</footer>
+
+</body>
+</html>
