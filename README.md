@@ -89,10 +89,17 @@ checked on every run, an editable-file allowlist enforced on the git diff, and a
 best is accepted. It runs end to end from a coding assistant (a Claude Code plugin with commands, a skill,
 a reviewer subagent and a fail-closed PreToolUse hook) or headless with no assistant at all.
 
-A real run on the bundled `quickstart` task, [kept in `examples/`](part-c-autoresearch-harness/examples/quickstart-run):
-`val_loss` 0.960 -> 0.0093 over eight experiments — four kept, one discarded, one crashed on NaN, and one
-**rejected in 0.00 s before any compute**, because the proposed diff reached into the validation split.
-That row is the entire argument for building a harness instead of writing a prompt.
+Two recorded runs are in [`examples/`](part-c-autoresearch-harness/examples):
+
+- **[`quickstart-run`](part-c-autoresearch-harness/examples/quickstart-run)** — `val_loss` 0.960 -> 0.0093
+  over eight experiments: four kept, one discarded, one crashed on NaN, and one **rejected in 0.00 s
+  before any compute**, because the proposed diff reached into the validation split. That row is the
+  entire argument for building a harness instead of writing a prompt.
+- **[`quickstart-live-gpt5mini`](part-c-autoresearch-harness/examples/quickstart-live-gpt5mini)** — the
+  same task driven autonomously by a model, no human in the loop after the first command:
+  **0.960452 -> 0.005833, −99.4% in 3 min 16 s**, four kept and two reverted. The instructive one is
+  experiment 2: the model wrote a correct Adam optimiser and the harness measured it four *millionths*
+  worse than plain SGD, then reverted it in three seconds. No argument, a measurement.
 
 The `tinygpt` task is the real thing: a 4-layer character GPT on tiny-shakespeare, 60-second budget on
 Apple Silicon (MPS), baseline `val_bpb 2.50`. Two runs of identical code differ by ~0.026 bpb, which is
@@ -122,6 +129,10 @@ cd part-b-deepseek-harness && ./scripts/install-community-plugins.sh web && ./sc
 
 No API key is needed to run any of the test suites: they drive scripted fake models. A key is needed only
 to talk to a real one.
+
+**Verified from a clean clone on 2026-09-19** (macOS 26, arm64, Python 3.12, Node 25):
+Part A 15/15 steps (135 tests), Part B 9 vault tests, Part C 108 tests — and, with a real key,
+live runs of all three (details in each part's README).
 
 ## Credits
 
