@@ -1,0 +1,6 @@
+step 2000: train_loss 0.0179
+step 4000: train_loss 0.0075
+step 6000: train_loss 0.0047
+step 8000: train_loss 0.0034
+step 10000: train_loss 0.0026
+METRIC val_loss=0.009589 steps=11662

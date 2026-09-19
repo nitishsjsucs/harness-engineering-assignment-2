@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arh"
+version = "0.1.0"
+description = "arh: an end-to-end ML autoresearch harness (keep/revert experiment loop with anti reward-hacking guards)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "nitishsjsucs" }]
+dependencies = [
+    "numpy>=1.24",
+    "matplotlib>=3.7",
+    "openai>=1.40",
+    "python-dotenv>=1.0",
+    "tomli>=2.0; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+# tinygpt task only; the engine and the quickstart task never import torch.
+torch = ["torch>=2.2"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+arh = "arh.cli:main"
+
+[tool.setuptools]
+packages = ["arh"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

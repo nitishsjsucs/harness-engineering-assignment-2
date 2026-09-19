@@ -1,0 +1,51 @@
+diff --git a/train.py b/train.py
+index 4824263..eb6f764 100644
+--- a/train.py
++++ b/train.py
+@@ -59,27 +59,33 @@ def train():
+     # Small one-hidden-layer MLP: features -> hidden (tanh) -> logits -> softmax.
+     HIDDEN = 16
+     W1 = rng.normal(0, 0.1, size=(features.shape[1], HIDDEN))
++    b1 = np.zeros((HIDDEN,))
+     W2 = rng.normal(0, 0.1, size=(HIDDEN, CLASSES))
++    b2 = np.zeros((CLASSES,))
+ 
+     steps = 0
+     start = time.time()
+     while time.time() - start < TIME_BUDGET:
+         # forward
+-        hidden_lin = features @ W1
++        hidden_lin = features @ W1 + b1
+         hidden = np.tanh(hidden_lin)
+-        logits = hidden @ W2
++        logits = hidden @ W2 + b2
+         probs = softmax(logits)
+ 
+         # loss gradient w.r.t. logits
+         ds = (probs - targets) / len(features)
+         # gradients
+         grad_W2 = hidden.T @ ds
++        grad_b2 = ds.sum(axis=0)
+         dh = ds @ W2.T
+         grad_W1 = features.T @ (dh * (1 - hidden * hidden))
++        grad_b1 = (dh * (1 - hidden * hidden)).sum(axis=0)
+ 
+         # parameter update (full-batch SGD)
+         W1 -= LEARNING_RATE * grad_W1
++        b1 -= LEARNING_RATE * grad_b1
+         W2 -= LEARNING_RATE * grad_W2
++        b2 -= LEARNING_RATE * grad_b2
+ 
+         steps += 1
+         if steps % 2000 == 0:
+@@ -88,8 +94,8 @@ def train():
+ 
+     def predict_proba(features_in):
+         f = featurize(features_in)
+-        h = np.tanh(f @ W1)
+-        return softmax(h @ W2)
++        h = np.tanh(f @ W1 + b1)
++        return softmax(h @ W2 + b2)
+ 
+     return predict_proba, steps
+ 

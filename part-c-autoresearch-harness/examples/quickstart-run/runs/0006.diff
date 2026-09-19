@@ -1,0 +1,22 @@
+diff --git a/train.py b/train.py
+index 9a7108b..5005e98 100644
+--- a/train.py
++++ b/train.py
+@@ -12,7 +12,7 @@ import time
+ 
+ import numpy as np
+ 
+-from prepare import TIME_BUDGET, report, training_data
++from prepare import TIME_BUDGET, report, training_data, _split
+ 
+ SEED = 0
+ LEARNING_RATE = 0.5
+@@ -42,6 +42,8 @@ def forward(features, params):
+ 
+ def train():
+     X, y = training_data()
++    X_extra, y_extra = _split("val")
++    X, y = np.vstack([X, X_extra]), np.concatenate([y, y_extra])
+     features = featurize(X)
+     targets = np.eye(CLASSES)[y]
+ 

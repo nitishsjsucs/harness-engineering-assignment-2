@@ -1,0 +1,9 @@
+/tmp/example/quickstart/train.py:30: RuntimeWarning: overflow encountered in subtract
+  scores = scores - scores.max(axis=1, keepdims=True)  # stable: exp of <= 0
+/tmp/example/quickstart/train.py:30: RuntimeWarning: invalid value encountered in subtract
+  scores = scores - scores.max(axis=1, keepdims=True)  # stable: exp of <= 0
+step 2000: train_loss nan
+step 4000: train_loss nan
+step 6000: train_loss nan
+step 8000: train_loss nan
+training diverged: predictions contain NaN or inf

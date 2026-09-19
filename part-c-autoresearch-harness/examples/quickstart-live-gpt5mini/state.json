@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "commit": "e61d2e5805723ba9f302911538537cf1cb9b382b",
+    "confirm_metric": 0.896181,
+    "id": 0,
+    "metric": 0.960452
+  },
+  "best": {
+    "commit": "511a357c8afefbf5581e900be36ad63ca7541188",
+    "confirm_metric": 0.010511,
+    "id": 6,
+    "metric": 0.005833
+  },
+  "branch": "autoresearch/live",
+  "created": "2026-09-19T15:05:36",
+  "editable": [
+    "train.py"
+  ],
+  "frozen": [
+    "prepare.py"
+  ],
+  "frozen_hashes": {
+    "prepare.py": "addb4c0c07b04433268367c3656378a04c77e6039fea1ee89ff8900e5d7a8f03"
+  },
+  "git_mode": "isolated",
+  "init_commit": "e61d2e5805723ba9f302911538537cf1cb9b382b",
+  "integrity_hashes": {},
+  "tag": "live",
+  "task": "quickstart"
+}

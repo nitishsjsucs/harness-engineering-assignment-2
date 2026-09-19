@@ -1,0 +1,24 @@
+diff --git a/train.py b/train.py
+index 26b46cb..775d641 100644
+--- a/train.py
++++ b/train.py
+@@ -21,9 +21,16 @@ CLASSES = 3
+ 
+ 
+ def featurize(X):
+-    """Turn raw (x, y) coordinates into model inputs. A bias column is the
+-    minimum; better features are one of the obvious things to try."""
+-    return np.hstack([X, np.ones((len(X), 1))])
++    """Turn raw (x, y) coordinates into model inputs.
++    Add quadratic features (x^2, y^2, x*y) plus bias to allow simple non-linear
++    decision boundaries while keeping the model still linear in parameters.
++    """
++    x = X[:, 0:1]
++    y = X[:, 1:2]
++    x2 = x * x
++    y2 = y * y
++    xy = x * y
++    return np.hstack([x, y, x2, y2, xy, np.ones((len(X), 1))])
+ 
+ 
+ def softmax(scores):

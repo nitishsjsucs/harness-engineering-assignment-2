@@ -1,0 +1,39 @@
+# The contract between the researcher (human or model) and the harness.
+# Everything the proposer must not decide for itself lives here.
+
+[task]
+name = "quickstart"
+description = "3-class spiral classification with numpy; about 4 seconds per experiment"
+program = "program.md"
+
+[files]
+editable = ["train.py"]          # the ONLY file an experiment may change
+frozen = ["prepare.py"]          # hashed before and after every run
+
+[run]
+command = "{python} train.py"    # {python} is the interpreter arh runs in
+budget_seconds = 30              # hard kill; training itself is capped at 3s inside prepare.py
+
+[metric]
+name = "val_loss"
+direction = "min"
+min_delta = 0.002                # noise floor: identical code re-runs within ~0.002
+
+[guards]
+# A cross-entropy below 0.002 on noisy spirals is not a better model, it is a leak.
+bounds = [0.002, 2.0]
+# Scanned against the ADDED lines of the diff, before any compute is spent.
+forbid_patterns = ["METRIC", "ARH_EVAL_SPLIT", "_split("]
+# A run far faster than the usual ones has probably skipped the training loop.
+min_duration_fraction = 0.25
+
+[confirm]
+# Before a new best is accepted, retrain and score on a split that was never
+# used for selection. Overfitting the val split shows up here as a rejection.
+command = "{python} train.py"
+env = { ARH_EVAL_SPLIT = "holdout" }
+metric = "holdout_loss"
+tolerance = 0.05
+
+[loop]
+max_experiments = 40

@@ -1,0 +1,47 @@
+# Laptop-sized version of the classic autoresearch setup: a char-level GPT
+# trained for a fixed 60 seconds, scored in bits per byte on a frozen slice.
+
+[task]
+name = "tinygpt"
+description = "char-level GPT on tiny-shakespeare, 60s of training per experiment, val bits-per-byte"
+program = "program.md"
+
+[files]
+editable = ["train.py"]
+frozen = ["prepare.py"]
+
+[run]
+setup = "{python} prepare.py"     # runs once at `arh init`: download, verify, tokenize
+command = "{python} train.py"
+budget_seconds = 180              # 60s training + startup + evaluation, with room to spare
+
+[metric]
+name = "val_bpb"
+direction = "min"
+# Measured on an M-series laptop: two runs of the identical baseline scored
+# 2.5258 and 2.5001, i.e. about 0.026 bpb of run-to-run noise, because a
+# time-budgeted run does a different number of steps each time. min_delta only
+# blunts that; a single run still cannot tell 0.02 of signal from luck.
+min_delta = 0.02
+
+[guards]
+# Random guessing over 65 characters is log2(65) = 6.02 bits; under 0.5 bits in
+# one minute on a laptop would mean the evaluation has been short-circuited.
+bounds = [0.5, 8.0]
+forbid_patterns = ["METRIC", "ARH_EVAL_SPLIT", "_eval_tokens", "val.npy"]
+# The tokenized data is not in git (it is downloaded), so it is protected by
+# hash instead: a run that rewrites the val tokens is caught here.
+integrity = ["data/train.npy", "data/val.npy", "data/meta.json"]
+min_duration_fraction = 0.5
+
+[loop]
+max_experiments = 100
+
+# Holdout confirmation is available but off by default: it retrains the model to
+# score the back half of the val split, which doubles a 60-second experiment.
+# Uncomment to trade speed for a stronger guard against val overfitting.
+# [confirm]
+# command = "{python} train.py"
+# env = { ARH_EVAL_SPLIT = "holdout" }
+# metric = "holdout_bpb"
+# tolerance = 0.02

@@ -1,0 +1,13 @@
+diff --git a/train.py b/train.py
+index 9a7108b..83bb804 100644
+--- a/train.py
++++ b/train.py
+@@ -16,7 +16,7 @@ from prepare import TIME_BUDGET, report, training_data
+ 
+ SEED = 0
+ LEARNING_RATE = 0.5
+-HIDDEN = 64
++HIDDEN = 512
+ CLASSES = 3
+ 
+ 

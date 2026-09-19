@@ -1,0 +1,8 @@
+id	timestamp	status	metric	delta	best	commit	parent	duration_s	description
+0	2026-09-19T15:05:36	keep	0.960452	-	-	e61d2e5	e61d2e5	3.120000	baseline (unmodified code)
+1	2026-09-19T15:05:54	keep	0.872082	-0.088370	0.960452	5566387	e61d2e5	3.130000	Add quadratic features (x^2, y^2, x*y) to allow simple non-linear boundaries; expect val_loss to drop since spirals need non-linear features.
+2	2026-09-19T15:06:34	discard	0.872086	0.000004	0.872082	-	5566387	3.130000	Switch optimizer to Adam (with LR 0.01) for faster, more stable convergence vs plain SGD; expect val_loss to drop by better optimization
+3	2026-09-19T15:07:18	keep	0.126915	-0.745167	0.872082	8a39750	5566387	3.100000	Add polar features (r, sin(theta), cos(theta)) to better capture spiral structure; expect val_loss to drop as model can use angular info.
+4	2026-09-19T15:07:43	keep	0.008474	-0.118441	0.126915	9cbd7e4	8a39750	3.120000	Add one hidden tanh layer (16 units) with full-batch SGD to give non-linear capacity; expect val_loss to drop as MLP can better separate spirals.
+5	2026-09-19T15:08:27	discard	0.009589	0.001115	0.008474	-	9cbd7e4	3.100000	Add biases to both layers (b1, b2) and update them with SGD; expect small improvement because biases let the network shift activations and better fit the spiral patterns.
+6	2026-09-19T15:08:52	keep	0.005833	-0.002641	0.008474	511a357	9cbd7e4	3.110000	Use SGD with momentum (0.9) instead of plain SGD; expect faster, more stable convergence and lower val_loss within the same time budget.

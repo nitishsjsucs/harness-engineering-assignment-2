@@ -1,0 +1,31 @@
+diff --git a/train.py b/train.py
+index 93757bf..cd7d895 100644
+--- a/train.py
++++ b/train.py
+@@ -15,7 +15,7 @@ import numpy as np
+ from prepare import TIME_BUDGET, report, training_data
+ 
+ SEED = 0
+-LEARNING_RATE = 0.5
++LEARNING_RATE = 200.0
+ HIDDEN = 64
+ CLASSES = 3
+ 
+@@ -34,7 +34,7 @@ def softmax(scores):
+ 
+ def forward(features, params):
+     W1, b1, W2, b2 = params
+-    hidden = np.tanh(features @ W1 + b1)
++    hidden = np.maximum(features @ W1 + b1, 0.0)
+     return hidden, softmax(hidden @ W2 + b2)
+ 
+ 
+@@ -56,7 +56,7 @@ def train():
+     while time.time() - start < TIME_BUDGET:
+         hidden, probs = forward(features, params)
+         d_scores = (probs - targets) / len(features)
+-        d_hidden = (d_scores @ params[2].T) * (1 - hidden ** 2)  # tanh'
++        d_hidden = (d_scores @ params[2].T) * (hidden > 0)  # relu'
+         grads = [features.T @ d_hidden, d_hidden.sum(0), hidden.T @ d_scores, d_scores.sum(0)]
+         for param, grad in zip(params, grads):
+             param -= LEARNING_RATE * grad

@@ -1,0 +1,13 @@
+{
+  "name": "autoresearch",
+  "description": "Run an ML autoresearch loop with the arh harness: hypothesis, one edit, measured run, keep or revert -- with frozen evaluation files enforced by a hook.",
+  "version": "0.1.0",
+  "author": {
+    "name": "nitishsjsucs",
+    "url": "https://github.com/nitishsjsucs"
+  },
+  "homepage": "https://github.com/nitishsjsucs/harness-engineering-assignment-2/tree/main/part-c-autoresearch-harness",
+  "repository": "https://github.com/nitishsjsucs/harness-engineering-assignment-2",
+  "license": "MIT",
+  "keywords": ["autoresearch", "ml", "experiments", "harness", "guardrails"]
+}

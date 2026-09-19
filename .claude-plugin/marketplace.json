@@ -1,0 +1,22 @@
+{
+  "name": "nitishsjsucs-harness",
+  "owner": {
+    "name": "nitishsjsucs",
+    "url": "https://github.com/nitishsjsucs"
+  },
+  "metadata": {
+    "description": "Harness-engineering assignment plugins",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "autoresearch",
+      "source": "./part-c-autoresearch-harness/claude-plugin",
+      "description": "Drive the arh ML autoresearch harness from Claude Code: /autoresearch:start, :status, :report, a loop skill, a diff auditor subagent, and hooks that block edits to frozen evaluation files.",
+      "version": "0.1.0",
+      "author": { "name": "nitishsjsucs" },
+      "keywords": ["autoresearch", "ml", "experiments", "harness"],
+      "license": "MIT"
+    }
+  ]
+}

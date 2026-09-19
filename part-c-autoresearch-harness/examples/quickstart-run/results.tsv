@@ -1,0 +1,9 @@
+id	timestamp	status	metric	delta	best	commit	parent	duration_s	description
+0	2026-09-19T14:37:16	keep	0.960452	-	-	e0c1d07	e0c1d07	3.110000	baseline (unmodified code)
+1	2026-09-19T14:37:22	keep	0.051125	-0.909327	0.960452	f761b42	e0c1d07	3.070000	one hidden layer (16 tanh units) instead of the linear model
+2	2026-09-19T14:37:29	keep	0.042848	-0.008277	0.051125	294172b	f761b42	3.090000	widen the hidden layer to 64 units
+3	2026-09-19T14:37:35	crash	-	-	0.042848	-	294172b	3.070000	relu units with a much larger learning rate (200)
+4	2026-09-19T14:37:38	keep	0.009255	-0.033593	0.042848	6dd860b	294172b	3.110000	add polar features: radius, sin/cos of the angle, and two harmonics
+5	2026-09-19T14:37:45	discard	0.046202	0.036947	0.009255	-	6dd860b	3.120000	much wider hidden layer (512 units)
+6	2026-09-19T14:37:48	invalid	-	-	0.009255	-	6dd860b	0.000000	train on the validation split as well to get more data
+7	2026-09-19T14:37:49	discard	0.009480	0.000225	0.009255	-	6dd860b	3.060000	small weight decay (1e-4) on the hidden weights

@@ -1,0 +1,43 @@
+diff --git a/train.py b/train.py
+index 775d641..fd10782 100644
+--- a/train.py
++++ b/train.py
+@@ -16,7 +16,7 @@ import numpy as np
+ from prepare import TIME_BUDGET, report, training_data
+ 
+ SEED = 0
+-LEARNING_RATE = 0.05
++LEARNING_RATE = 0.01
+ CLASSES = 3
+ 
+ 
+@@ -47,12 +47,28 @@ def train():
+     rng = np.random.default_rng(SEED)
+     weights = rng.normal(0, 0.01, size=(features.shape[1], CLASSES))
+ 
++    # Use Adam optimizer for faster, more stable convergence than plain SGD.
++    m = np.zeros_like(weights)
++    v = np.zeros_like(weights)
++    beta1 = 0.9
++    beta2 = 0.999
++    eps = 1e-8
++    t = 0
++
+     steps = 0
+     start = time.time()
+     while time.time() - start < TIME_BUDGET:
++        t += 1
+         probs = softmax(features @ weights)
+         gradient = features.T @ (probs - targets) / len(features)
+-        weights -= LEARNING_RATE * gradient
++
++        # Adam update
++        m = beta1 * m + (1 - beta1) * gradient
++        v = beta2 * v + (1 - beta2) * (gradient * gradient)
++        m_hat = m / (1 - beta1 ** t)
++        v_hat = v / (1 - beta2 ** t)
++        weights -= LEARNING_RATE * m_hat / (np.sqrt(v_hat) + eps)
++
+         steps += 1
+         if steps % 2000 == 0:
+             train_loss = -np.mean(np.log(np.clip(probs[np.arange(len(y)), y], 1e-12, None)))

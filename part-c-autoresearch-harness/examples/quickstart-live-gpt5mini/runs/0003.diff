@@ -1,0 +1,30 @@
+diff --git a/train.py b/train.py
+index 775d641..555888f 100644
+--- a/train.py
++++ b/train.py
+@@ -24,13 +24,24 @@ def featurize(X):
+     """Turn raw (x, y) coordinates into model inputs.
+     Add quadratic features (x^2, y^2, x*y) plus bias to allow simple non-linear
+     decision boundaries while keeping the model still linear in parameters.
++
++    Also add polar-coordinate features: radius r and angle theta (as sin
++    and cos) so the model can more naturally represent spiral structure.
+     """
+     x = X[:, 0:1]
+     y = X[:, 1:2]
+     x2 = x * x
+     y2 = y * y
+     xy = x * y
+-    return np.hstack([x, y, x2, y2, xy, np.ones((len(X), 1))])
++    # radius
++    r = np.sqrt(x2 + y2)
++    # angle theta; use sin and cos of theta to avoid discontinuities
++    # arctan2 is fine but we represent angle by sin/cos which are continuous
++    # in Cartesian coordinates when combined with r.
++    theta = np.arctan2(y, x)
++    sin_t = np.sin(theta)
++    cos_t = np.cos(theta)
++    return np.hstack([x, y, x2, y2, xy, r, sin_t, cos_t, np.ones((len(X), 1))])
+ 
+ 
+ def softmax(scores):

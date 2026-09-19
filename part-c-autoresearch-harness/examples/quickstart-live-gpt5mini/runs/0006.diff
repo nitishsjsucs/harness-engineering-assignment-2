@@ -1,0 +1,30 @@
+diff --git a/train.py b/train.py
+index 4824263..785f9f0 100644
+--- a/train.py
++++ b/train.py
+@@ -60,6 +60,10 @@ def train():
+     HIDDEN = 16
+     W1 = rng.normal(0, 0.1, size=(features.shape[1], HIDDEN))
+     W2 = rng.normal(0, 0.1, size=(HIDDEN, CLASSES))
++    # Momentum buffers for SGD with momentum
++    MOMENTUM = 0.9
++    vW1 = np.zeros_like(W1)
++    vW2 = np.zeros_like(W2)
+ 
+     steps = 0
+     start = time.time()
+@@ -77,9 +81,11 @@ def train():
+         dh = ds @ W2.T
+         grad_W1 = features.T @ (dh * (1 - hidden * hidden))
+ 
+-        # parameter update (full-batch SGD)
+-        W1 -= LEARNING_RATE * grad_W1
+-        W2 -= LEARNING_RATE * grad_W2
++        # parameter update (SGD with momentum)
++        vW1 = MOMENTUM * vW1 + LEARNING_RATE * grad_W1
++        vW2 = MOMENTUM * vW2 + LEARNING_RATE * grad_W2
++        W1 -= vW1
++        W2 -= vW2
+ 
+         steps += 1
+         if steps % 2000 == 0:

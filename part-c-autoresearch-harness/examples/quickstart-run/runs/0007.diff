@@ -1,0 +1,13 @@
+diff --git a/train.py b/train.py
+index 9a7108b..5b6cf21 100644
+--- a/train.py
++++ b/train.py
+@@ -61,7 +61,7 @@ def train():
+         d_hidden = (d_scores @ params[2].T) * (1 - hidden ** 2)  # tanh'
+         grads = [features.T @ d_hidden, d_hidden.sum(0), hidden.T @ d_scores, d_scores.sum(0)]
+         for param, grad in zip(params, grads):
+-            param -= LEARNING_RATE * grad
++            param -= LEARNING_RATE * (grad + 1e-4 * param)
+         steps += 1
+         if steps % 2000 == 0:
+             train_loss = -np.mean(np.log(np.clip(probs[np.arange(len(y)), y], 1e-12, None)))

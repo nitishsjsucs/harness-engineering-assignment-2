@@ -1,0 +1,72 @@
+diff --git a/train.py b/train.py
+index 26b46cb..ef3075e 100644
+--- a/train.py
++++ b/train.py
+@@ -1,8 +1,7 @@
+ """EDITABLE. The only file an experiment may change in the quickstart task.
+ 
+-Baseline: multinomial logistic regression trained with full-batch gradient
+-descent for TIME_BUDGET seconds. It is deliberately weak -- a linear model
+-cannot separate spirals -- so there is plenty to improve.
++One hidden layer with tanh units, trained with full-batch gradient descent for
++TIME_BUDGET seconds. A linear model cannot bend around a spiral; this can.
+ 
+ Rules that the harness enforces anyway: never print a METRIC line yourself
+ (prepare.report does that), never touch prepare.py, and never reach for the
+@@ -16,7 +15,8 @@ import numpy as np
+ from prepare import TIME_BUDGET, report, training_data
+ 
+ SEED = 0
+-LEARNING_RATE = 0.05
++LEARNING_RATE = 0.5
++HIDDEN = 16
+ CLASSES = 3
+ 
+ 
+@@ -32,27 +32,41 @@ def softmax(scores):
+     return exp / exp.sum(axis=1, keepdims=True)
+ 
+ 
++def forward(features, params):
++    W1, b1, W2, b2 = params
++    hidden = np.tanh(features @ W1 + b1)
++    return hidden, softmax(hidden @ W2 + b2)
++
++
+ def train():
+     X, y = training_data()
+     features = featurize(X)
+     targets = np.eye(CLASSES)[y]
+ 
+     rng = np.random.default_rng(SEED)
+-    weights = rng.normal(0, 0.01, size=(features.shape[1], CLASSES))
++    params = [
++        rng.normal(0, 0.5, size=(features.shape[1], HIDDEN)),
++        np.zeros(HIDDEN),
++        rng.normal(0, 0.5, size=(HIDDEN, CLASSES)),
++        np.zeros(CLASSES),
++    ]
+ 
+     steps = 0
+     start = time.time()
+     while time.time() - start < TIME_BUDGET:
+-        probs = softmax(features @ weights)
+-        gradient = features.T @ (probs - targets) / len(features)
+-        weights -= LEARNING_RATE * gradient
++        hidden, probs = forward(features, params)
++        d_scores = (probs - targets) / len(features)
++        d_hidden = (d_scores @ params[2].T) * (1 - hidden ** 2)  # tanh'
++        grads = [features.T @ d_hidden, d_hidden.sum(0), hidden.T @ d_scores, d_scores.sum(0)]
++        for param, grad in zip(params, grads):
++            param -= LEARNING_RATE * grad
+         steps += 1
+         if steps % 2000 == 0:
+             train_loss = -np.mean(np.log(np.clip(probs[np.arange(len(y)), y], 1e-12, None)))
+             print(f"step {steps}: train_loss {train_loss:.4f}")
+ 
+     def predict_proba(features_in):
+-        return softmax(featurize(features_in) @ weights)
++        return forward(featurize(features_in), params)[1]
+ 
+     return predict_proba, steps
+ 
