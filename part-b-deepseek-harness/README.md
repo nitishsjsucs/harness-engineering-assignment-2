@@ -66,7 +66,7 @@ this is how the whole of Part B was developed:
 DSH_HOME=/tmp/dsh-demo dsh web --no-open --port 3180
 ```
 
-### Configure a model
+### Configure a model — for free
 
 Settings -> Models. The shipped card is DeepSeek (`platform.deepseek.com`). For this assignment the
 same OpenRouter key as Part A works — add it as a **custom provider**, because OpenRouter is not in the
@@ -78,10 +78,39 @@ built-in catalogue:
 | Base URL | `https://openrouter.ai/api/v1` |
 | API protocol | `openai-completions` |
 | API key | `sk-or-...` |
-| Models | `google/gemini-3.5-flash`, `deepseek/deepseek-v4-flash`, `anthropic/claude-sonnet-5`, ... |
+| Models | `deepseek/deepseek-v4-flash-0731:free`, `nvidia/nemotron-3.5-lightning:free` |
+
+Both of those cost **nothing** and both do tool calling, which is what a harness actually needs. The
+equivalent, written straight into `$DSH_HOME/settings.yaml` (what this repo was tested with — the two
+`compat` switches are the ones most OpenAI-compatible gateways need):
+
+```yaml
+llm-pi-ai:
+  providers:
+    openrouter:
+      apiKeyEnv: OPENROUTER_API_KEY
+      api: openai-completions
+      baseURL: https://openrouter.ai/api/v1
+      compat:
+        supportsDeveloperRole: false
+        maxTokensField: max_tokens
+      models:
+        - id: deepseek/deepseek-v4-flash-0731:free
+          displayName: DeepSeek V4 Flash (free)
+        - id: nvidia/nemotron-3.5-lightning:free
+          displayName: Nemotron 3.5 Lightning (free)
+```
+
+Then start the harness with the key in the environment: `OPENROUTER_API_KEY=sk-or-... dsh web`.
+
+> **Know the ceiling before you demo.** OpenRouter's free tier is **20 requests per minute and 50 per
+> day**; an account that has ever purchased $10 of credits gets 1000 per day
+> ([limits](https://openrouter.ai/docs/api-reference/limits)). One agent turn is several requests — the
+> capture demo below cost four — so a long filming session can exhaust 50 quickly. Check what is left:
+> `curl -s https://openrouter.ai/api/v1/key -H "Authorization: Bearer $OPENROUTER_API_KEY"`.
 
 An OpenAI key is simpler still: **Add provider -> openai**, paste the key, done (the installed catalogue
-supplies endpoint and model list).
+supplies endpoint and model list) — but it is not free.
 
 If a gateway refuses every request, the two switches that fix most of them go in `$DSH_HOME/settings.yaml`:
 
@@ -246,6 +275,24 @@ without its header. With a model attached, the harness offered **36 tools includ
 and ran them for real: `brain_capture` created a note stamped with the session id, and in a **separate
 session with an empty context**, `brain_search` returned that note ranked by BM25 — memory outliving the
 conversation, which is the whole point of the plugin. `npm test` passes (9 tests, no network).
+
+Re-run on the **free** route (`deepseek/deepseek-v4-flash-0731:free`, 4 requests, $0), the model did
+something better than the paid one: it called `brain_search` *before* capturing — which is exactly what
+the plugin's system-prompt section asks for — then `brain_list` to see the existing tags, then
+`brain_capture`, and it added a `Related: [[...]]` wikilink of its own accord. The note it wrote:
+
+```markdown
+---
+title: Presets ship as files in git (DSH)
+tags: [decisions, dsh]
+source: "dsh-session:session-6b6349e1-..."
+---
+**Decision:** Ship presets as files committed to git, rather than ... from a copied preset in chat.
+**Why:** Editing from a copied preset requires Full access (sandbox escalation) ...
+Related: [[tool-call-from-the-mock-provider]]
+```
+
+Five lines of prompt turned a tool list into a habit — on a model that costs nothing.
 
 **Creator mode.** One sentence produced a working plugin in the live process: skill load ->
 `cordis_inspect_list` -> `cordis_inspect_query` -> `cordis_define` -> `cordis_run` -> approval -> a whale
